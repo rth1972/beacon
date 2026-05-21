@@ -1,0 +1,12 @@
+node_modules/
+.next/
+*.db
+*.db-wal
+*.db-shm
+.env
+.DS_Store
+android/.gradle/
+android/build/
+android/app/build/
+android/captures/
+android/local.properties

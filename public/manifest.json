@@ -1,0 +1,13 @@
+{
+  "name": "Beacon",
+  "short_name": "Beacon",
+  "description": "Self-hosted push notifications",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#19171c",
+  "theme_color": "#f3ba40",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
