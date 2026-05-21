@@ -200,7 +200,7 @@ export default function LandingPage() {
             <h4 style={s.footerTitle}>Tech</h4>
             <div style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.8 }}>
               Next.js 16 · SQLite · SSE<br />
-              TypeScript · Capacitor
+              TypeScript
             </div>
           </div>
         </div>
