@@ -3,64 +3,160 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
-/* ── RTH Color Palette ── */
-const C = {
-  dark: '#19171c',
-  gray: '#353535',
-  card: '#242424',
-  gold: '#f3ba40',
-  goldLight: '#f9c25b',
-  orange: '#fe6f41',
-  text: '#cccccc',
-  textMuted: '#bebebe',
-  border: '#505050',
-  track: '#5e5e5e',
-  grad1: '#f4d157',
-  grad2: '#ea9322',
+/* ── Themes ── */
+type Theme = {
+  bg: string; gray: string; card: string;
+  gold: string; goldLight: string; goldDark: string; orange: string;
+  text: string; textMuted: string; border: string; track: string;
+  grad1: string; grad2: string; heading: string;
+  heroBg: string; heroOverlay: string; demoAnim: string;
+}
+
+const darkTheme: Theme = {
+  bg: '#19171c', gray: '#353535', card: '#242424',
+  gold: '#f3ba40', goldLight: '#f9c25b', goldDark: '#d49e1a', orange: '#fe6f41',
+  text: '#cccccc', textMuted: '#bebebe', border: '#505050', track: '#5e5e5e',
+  grad1: '#f4d157', grad2: '#ea9322', heading: '#ffffff',
+  heroBg: 'url(/hero-bg.svg)',
+  heroOverlay: [
+    `linear-gradient(#19171cD0, #19171c)`,
+    `radial-gradient(ellipse at 50% 0%, #f3ba4015 0%, transparent 0%)`,
+    `radial-gradient(ellipse at 20% 80%, #ea93220C 0%, transparent 0%)`,
+    `radial-gradient(ellipse at 80% 60%, #f4d1570A 0%, transparent 0%)`,
+  ].join(', '),
+  demoAnim: '/demo-anim.svg',
+}
+
+const lightTheme: Theme = {
+  bg: '#f5f5f0', gray: '#e8e8e3', card: '#ffffff',
+  gold: '#c9950e', goldLight: '#b8860b', goldDark: '#8b6914', orange: '#d4511a',
+  text: '#2a2a2a', textMuted: '#777777', border: '#d4d4cc', track: '#e0e0d8',
+  grad1: '#d49e1a', grad2: '#b8860b', heading: '#1a1a1a',
+  heroBg: 'url(/hero-bg-light.svg)',
+  heroOverlay: [
+    `linear-gradient(#f5f5f0E0, #f5f5f0)`,
+    `radial-gradient(ellipse at 50% 0%, #c9950e10 0%, transparent 0%)`,
+    `radial-gradient(ellipse at 20% 80%, #b8860b08 0%, transparent 0%)`,
+    `radial-gradient(ellipse at 80% 60%, #d49e1a08 0%, transparent 0%)`,
+  ].join(', '),
+  demoAnim: '/demo-anim-light.svg',
 }
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
+  const [showTopBtn, setShowTopBtn] = useState(false)
+  const [lightMode, setLightMode] = useState(true)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const C: Theme = lightMode ? lightTheme : darkTheme
+  const s = buildStyles(C)
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 50)
+    const onScroll = () => {
+      const y = window.scrollY
+      setScrolled(y > 50)
+      setShowTopBtn(y > 300)
+    }
     window.addEventListener('scroll', onScroll, { passive: true })
     onScroll()
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  const toggleTheme = () => setLightMode(p => !p)
+
   return (
-    <div style={{ ...s.page, background: C.dark, color: C.text }}>
+    <div style={{ ...s.page, background: C.bg, color: C.text }}>
+
+      <style>{`
+        @media (max-width: 768px) {
+          [data-bn-desktop] { display: none !important; }
+          [data-bn-hamburger] { display: flex !important; }
+          [data-bn-inner] { padding: 0 16px !important; }
+        }
+        @media (min-width: 769px) {
+          [data-bn-hamburger] { display: none !important; }
+          [data-bn-overlay] { display: none !important; }
+        }
+      `}</style>
 
       {/* Nav */}
       <nav style={{ ...s.nav, ...(scrolled ? s.navSolid : s.navTop) }}>
-        <div style={s.navInner}>
+        <div data-bn-inner style={s.navInner}>
           <Link href="/" style={s.navLogo}>
             <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
               <rect x="6" y="2" width="36" height="44" rx="6" stroke={C.gold} strokeWidth="2"/>
               <rect x="10" y="8" width="28" height="34" rx="2" stroke={C.gold} strokeWidth="0.5" opacity="0.35"/>
               <circle cx="24" cy="4" r="1.5" stroke={C.gold} strokeWidth="1"/>
               <rect x="18" y="42" width="12" height="1.5" rx="0.75" stroke={C.gold} strokeWidth="1" opacity="0.6"/>
-              <rect x="14" y="16" width="20" height="18" rx="3" fill={C.dark} stroke={C.gold} strokeWidth="0.8"/>
+              <rect x="14" y="16" width="20" height="18" rx="3" fill={C.bg} stroke={C.gold} strokeWidth="0.8"/>
               <rect x="17" y="18" width="5" height="5" rx="1.5" stroke={C.gold} strokeWidth="0.6"/>
               <path d="M19.5,20.5c-0.5,0-1,0.3-1,0.8v0.6l-0.5,0.5c-0.2,0.2-0.1,0.4,0,0.5c0.7,0.3,1.4,0.5,2.2,0.5s1.5-0.2,2.2-0.5c0.2-0.1,0.2-0.3,0-0.5l-0.5-0.5v-0.6c0-0.5-0.5-0.8-1-0.8z" stroke={C.gold} strokeWidth="0.4"/>
               <circle cx="38" cy="12" r="3.5" fill="#cc2200"/>
               <text x="38" y="13.5" textAnchor="middle" fontFamily="sans-serif" fontSize="5" fontWeight="bold" fill="#fff">!</text>
             </svg>
-            <span style={{ fontSize: 17, fontWeight: 600, color: '#fff', letterSpacing: '-0.3px' }}>Beacon</span>
+            <span style={{ fontSize: 17, fontWeight: 600, color: C.text, letterSpacing: '-0.3px' }}>Beacon</span>
           </Link>
-          <div style={s.navLinks}>
+
+          {/* Desktop links */}
+          <div data-bn-desktop style={s.navLinks}>
             <a href="#features" style={s.navLink}>Features</a>
-            <a href="#roadmap" style={s.navLink}>Roadmap</a>
             <a href="#setup" style={s.navLink}>Setup</a>
+            <button onClick={toggleTheme} style={s.themeToggle} aria-label="Toggle theme">
+              {lightMode ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5"/>
+                  <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                  <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+              )}
+            </button>
             <Link href="/dashboard" style={s.navCta}>Dashboard</Link>
           </div>
+
+          {/* Hamburger */}
+          <button data-bn-hamburger onClick={() => setMenuOpen(true)} style={s.hamburger} aria-label="Open menu">
+            <span style={s.hamburgerLine} /><span style={s.hamburgerLine} /><span style={s.hamburgerLine} />
+          </button>
         </div>
       </nav>
 
+      {/* Mobile overlay */}
+      {menuOpen && (
+        <div data-bn-overlay style={s.mobileOverlay} onClick={() => setMenuOpen(false)}>
+          <div style={s.mobilePanel} onClick={e => e.stopPropagation()}>
+            <div style={s.mobileHeader}>
+              <span style={{ fontSize: 17, fontWeight: 600, color: C.heading }}>Beacon</span>
+              <button onClick={() => setMenuOpen(false)} style={s.mobileClose} aria-label="Close menu">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.text} strokeWidth="2" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <div style={s.mobileBody}>
+              <a href="#features" style={s.mobileLink} onClick={() => setMenuOpen(false)}>Features</a>
+              <a href="#setup" style={s.mobileLink} onClick={() => setMenuOpen(false)}>Setup</a>
+              <div style={{ height: 1, background: C.border, opacity: 0.3, margin: '12px 0' }} />
+              <Link href="/dashboard" style={s.mobileCta} onClick={() => setMenuOpen(false)}>Dashboard</Link>
+              <button onClick={() => { toggleTheme(); setMenuOpen(false) }} style={s.mobileThemeBtn}>
+                {lightMode ? (
+                  <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark mode</>
+                ) : (
+                  <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Light mode</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Hero ── */}
-      <section style={s.hero}>
-        <div style={s.heroOverlay} />
+      <section style={{ ...s.hero, backgroundImage: C.heroBg }}>
+        <div style={{ ...s.heroOverlay, background: C.heroOverlay }} />
         <div style={s.heroInner}>
           <div style={s.heroBadge}>
             <span style={s.badgeDot} />
@@ -135,7 +231,7 @@ export default function LandingPage() {
           {/* ── Live Demo ── */}
           <div style={s.demoSection}>
             <div style={s.demoContainer}>
-              <object data="/demo-anim.svg" type="image/svg+xml" style={s.demoSvg} aria-label="Demo animation showing Beacon notification flow" />
+              <object data={C.demoAnim} type="image/svg+xml" style={s.demoSvg} aria-label="Demo animation showing Beacon notification flow" />
             </div>
             <div style={s.demoSteps}>
               {[
@@ -199,7 +295,6 @@ export default function LandingPage() {
           <div style={s.footerCol}>
             <h4 style={s.footerTitle}>Quick Links</h4>
             <a href="#features" style={s.footerLink}>Features</a>
-            <a href="#roadmap" style={s.footerLink}>Roadmap</a>
             <a href="#setup" style={s.footerLink}>Setup</a>
             <Link href="/dashboard" style={s.footerLink}>Dashboard</Link>
           </div>
@@ -224,13 +319,21 @@ export default function LandingPage() {
           <div style={{ color: C.textMuted }}>Self-hosted. Your data. Your rules.</div>
         </div>
       </footer>
+
+      {/* Scroll to top */}
+      <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ ...s.topBtn, ...(showTopBtn ? s.topBtnVisible : {}) }} aria-label="Scroll to top">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2.5" strokeLinecap="round">
+          <polyline points="18 15 12 9 6 15"/>
+        </svg>
+      </button>
     </div>
   )
 }
 
 /* ── Styles ── */
 
-const s: Record<string, React.CSSProperties> = {
+function buildStyles(C: Theme): Record<string, React.CSSProperties> {
+  return {
   page: {
     fontFamily: "'DM Sans', system-ui, sans-serif",
     minHeight: '100vh',
@@ -241,7 +344,7 @@ const s: Record<string, React.CSSProperties> = {
     transition: 'background 0.25s, border-color 0.25s',
   },
   navTop: { background: 'transparent', borderBottom: '1px solid transparent' },
-  navSolid: { background: `${C.dark}E0`, backdropFilter: 'blur(12px)', borderBottom: `1px solid ${C.border}40` },
+  navSolid: { background: `${C.bg}E0`, backdropFilter: 'blur(12px)', borderBottom: `1px solid ${C.border}40` },
   navInner: {
     maxWidth: 1100, margin: '0 auto', padding: '0 48px', height: 62,
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -249,28 +352,72 @@ const s: Record<string, React.CSSProperties> = {
   navLogo: { display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' },
   navLinks: { display: 'flex', alignItems: 'center', gap: 28, fontSize: 13 },
   navLink: { color: C.text, textDecoration: 'none', transition: 'color 0.15s', letterSpacing: '0.3px' },
+  themeToggle: {
+    background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 6,
+    padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center',
+    lineHeight: 0,
+  },
   navCta: {
     background: `linear-gradient(135deg, ${C.grad1}, ${C.grad2})`,
     color: '#fff', padding: '7px 18px', borderRadius: 6,
     fontSize: 12, fontWeight: 600, textDecoration: 'none', letterSpacing: '0.5px',
     textTransform: 'uppercase' as const,
   },
+  hamburger: {
+    display: 'none', flexDirection: 'column' as const, gap: 4,
+    background: 'transparent', border: 'none', cursor: 'pointer',
+    padding: 8,
+  },
+  hamburgerLine: {
+    width: 18, height: 2, borderRadius: 1, background: C.text,
+    display: 'block',
+  },
+  mobileOverlay: {
+    position: 'fixed' as const, inset: 0, zIndex: 200,
+    background: 'rgba(0,0,0,0.6)', display: 'flex',
+    justifyContent: 'flex-end' as const,
+  },
+  mobilePanel: {
+    width: '75%', maxWidth: 320, height: '100%',
+    background: C.card, display: 'flex', flexDirection: 'column' as const,
+  },
+  mobileHeader: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '18px 20px', borderBottom: `1px solid ${C.border}40`,
+  },
+  mobileClose: {
+    background: 'transparent', border: 'none', cursor: 'pointer',
+    padding: 4, display: 'flex',
+  },
+  mobileBody: {
+    flex: 1, padding: 20, display: 'flex', flexDirection: 'column' as const, gap: 6,
+  },
+  mobileLink: {
+    display: 'block', padding: '12px 14px', borderRadius: 8,
+    color: C.text, textDecoration: 'none', fontSize: 15, fontWeight: 500,
+    transition: 'background 0.15s',
+  },
+  mobileCta: {
+    display: 'block', textAlign: 'center' as const, padding: '12px 14px',
+    borderRadius: 8, color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 600,
+    background: `linear-gradient(135deg, ${C.grad1}, ${C.grad2})`,
+    letterSpacing: '0.5px',
+  },
+  mobileThemeBtn: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+    width: '100%', padding: '12px 14px', borderRadius: 8,
+    background: 'transparent', border: `1px solid ${C.border}`, color: C.text,
+    fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+  },
   /* Hero */
   hero: {
     position: 'relative' as const, zIndex: 1, overflow: 'hidden',
     minHeight: '100vh', padding: '100px 24px', textAlign: 'center' as const,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    backgroundImage: 'url(/push_notification_wallpaper_v6.svg)',
     backgroundSize: 'cover', backgroundPosition: 'right',
   },
   heroOverlay: {
     position: 'absolute' as const, inset: 0,
-    background: `
-      linear-gradient(${C.dark}D0, ${C.dark}),
-      radial-gradient(ellipse at 50% 0%, ${C.gold}15 0%, transparent 0%),
-      radial-gradient(ellipse at 20% 80%, ${C.grad2}0C 0%, transparent 0%),
-      radial-gradient(ellipse at 80% 60%, ${C.grad1}0A 0%, transparent 0%)
-    `,
     pointerEvents: 'none',
   },
   heroInner: { maxWidth: 780, margin: '0 auto', position: 'relative' as const, zIndex: 1 },
@@ -283,7 +430,7 @@ const s: Record<string, React.CSSProperties> = {
   badgeDot: { width: 6, height: 6, borderRadius: '50%', background: C.goldLight },
   heroTitle: {
     fontSize: 'clamp(36px, 6vw, 64px)', fontWeight: 700,
-    lineHeight: 1.1, letterSpacing: '2px', marginBottom: 20, color: '#fff',
+    lineHeight: 1.1, letterSpacing: '2px', marginBottom: 20, color: C.heading,
   },
   heroAccent: {
     background: `linear-gradient(135deg, ${C.grad1}, ${C.grad2})`,
@@ -314,7 +461,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   sectionTitle: {
     fontSize: 'clamp(28px, 3.5vw, 42px)', fontWeight: 700,
-    lineHeight: 1.15, marginBottom: 48, letterSpacing: '1px', color: '#fff',
+    lineHeight: 1.15, marginBottom: 48, letterSpacing: '1px', color: C.heading,
   },
   titleAccent: {
     background: `linear-gradient(135deg, ${C.grad1}, ${C.grad2})`,
@@ -328,7 +475,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   featureCard: { background: C.card, padding: '32px 28px' },
   featureIcon: { width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, marginBottom: 18 },
-  featureTitle: { fontSize: 13, fontWeight: 600, marginBottom: 10, letterSpacing: '1px', color: '#fff' },
+  featureTitle: { fontSize: 13, fontWeight: 600, marginBottom: 10, letterSpacing: '1px', color: C.goldDark },
   featureDesc: { fontSize: 14, color: C.text, lineHeight: 1.65 },
   /* Demo */
   demoSection: {
@@ -345,16 +492,16 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontSize: 12, fontWeight: 600, flexShrink: 0, fontFamily: "'DM Mono', monospace",
   },
-  demoStepTitle: { fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 3 },
+  demoStepTitle: { fontSize: 14, fontWeight: 600, color: C.heading, marginBottom: 3 },
   demoStepDesc: { fontSize: 13, color: C.textMuted, lineHeight: 1.55 },
   /* Setup */
-  setupGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginBottom: 40 },
+  setupGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20, marginBottom: 40 },
   setupCard: { background: C.card, border: `1px solid ${C.border}60`, borderRadius: 12, padding: 28 },
   setupNum: { fontSize: 12, color: C.gold, fontWeight: 600, fontFamily: "'DM Mono', monospace", marginBottom: 14, letterSpacing: 1 },
-  setupTitle: { fontSize: 16, fontWeight: 500, marginBottom: 10, color: '#fff' },
+  setupTitle: { fontSize: 16, fontWeight: 500, marginBottom: 10, color: C.goldDark },
   setupDesc: { fontSize: 13, color: C.text, lineHeight: 1.65, marginBottom: 16 },
   setupCode: {
-    background: C.dark, border: `1px solid ${C.border}60`, borderRadius: 6,
+    background: C.bg, border: `1px solid ${C.border}60`, borderRadius: 6,
     padding: 12, fontSize: 11, fontFamily: "'DM Mono', monospace", color: C.textMuted,
     overflowX: 'auto' as const, whiteSpace: 'pre-wrap' as const, margin: 0,
   },
@@ -377,7 +524,7 @@ const s: Record<string, React.CSSProperties> = {
     textAlign: 'center' as const, padding: '80px 24px',
     borderTop: `1px solid ${C.border}60`, position: 'relative' as const, zIndex: 1,
   },
-  ctaTitle: { fontSize: 'clamp(24px, 3.5vw, 36px)', fontWeight: 700, letterSpacing: '2px', marginBottom: 16, color: '#fff' },
+  ctaTitle: { fontSize: 'clamp(24px, 3.5vw, 36px)', fontWeight: 700, letterSpacing: '2px', marginBottom: 16, color: C.goldDark },
   ctaDesc: { color: C.text, fontSize: 15, marginBottom: 32, lineHeight: 1.6 },
   ctaBtn: {
     display: 'inline-block',
@@ -386,10 +533,10 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 13, fontWeight: 600, letterSpacing: '1px', textDecoration: 'none',
   },
   /* Footer */
-  footer: { borderTop: `1px solid ${C.border}60`, padding: '48px 24px 28px', position: 'relative' as const, zIndex: 1, background: '#1c1c1c' },
+  footer: { borderTop: `1px solid ${C.border}60`, padding: '48px 24px 28px', position: 'relative' as const, zIndex: 1, background: C.card },
   footerTop: { maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 40, marginBottom: 40 },
   footerCol: { display: 'flex', flexDirection: 'column' as const, gap: 8 },
-  footerTitle: { fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 4, letterSpacing: '0.5px' },
+  footerTitle: { fontSize: 13, fontWeight: 600, color: C.heading, marginBottom: 4, letterSpacing: '0.5px' },
   footerP: { fontSize: 13, color: C.textMuted, lineHeight: 1.6 },
   footerLink: { fontSize: 13, color: C.text, textDecoration: 'none', transition: 'color 0.15s' },
   footerBot: {
@@ -398,4 +545,17 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     fontSize: 13, color: C.textMuted,
   },
-}
+  topBtn: {
+    position: 'fixed' as const, bottom: 28, right: 28, zIndex: 300,
+    width: 42, height: 42, borderRadius: '50%',
+    background: C.card, border: `1px solid ${C.border}`,
+    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    opacity: 0, pointerEvents: 'none' as const,
+    transform: 'translateY(12px)',
+    transition: 'opacity .25s, transform .25s',
+  },
+  topBtnVisible: {
+    opacity: 1, pointerEvents: 'auto' as const,
+    transform: 'translateY(0)',
+  },
+}}

@@ -7,8 +7,8 @@
       .badge-pulse { animation: pulse 1s ease-in-out infinite; }
     </style>
     <linearGradient id="gg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#f4d157"/>
-      <stop offset="100%" stop-color="#ea9322"/>
+      <stop offset="0%" stop-color="#d49e1a"/>
+      <stop offset="100%" stop-color="#b8860b"/>
     </linearGradient>
     <linearGradient id="rb" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#ff4444"/>
@@ -27,12 +27,12 @@
   </defs>
 
   <!-- Container -->
-  <rect width="480" height="660" rx="16" fill="#19171c"/>
-  <rect x="2" y="2" width="476" height="656" rx="14" fill="none" stroke="#505050" stroke-width="1" opacity=".35"/>
+  <rect width="480" height="660" rx="16" fill="#f0f0eb"/>
+  <rect x="2" y="2" width="476" height="656" rx="14" fill="none" stroke="#d4d4cc" stroke-width="1" opacity=".5"/>
 
   <!-- Phone -->
-  <rect x="80" y="30" width="320" height="590" rx="36" fill="#111" stroke="url(#gg)" stroke-width="2.5"/>
-  <rect x="96" y="56" width="288" height="545" rx="10" fill="#1a1a1a"/>
+  <rect x="80" y="30" width="320" height="590" rx="36" fill="#1a1a1a" stroke="url(#gg)" stroke-width="2.5"/>
+  <rect x="96" y="56" width="288" height="545" rx="10" fill="#1e1e1e"/>
   <rect x="100" y="60" width="280" height="540" rx="6" fill="#0f0f0f"/>
   <circle cx="240" cy="46" r="5" fill="url(#gg)" opacity=".35"/>
   <rect x="226" y="44" width="28" height="3" rx="1.5" fill="url(#gg)" opacity=".15"/>
@@ -43,9 +43,9 @@
   <text x="240" y="85" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14" font-weight="600" fill="#fff">Beacon</text>
 
   <!-- Topic -->
-  <text x="113" y="130" font-family="system-ui,sans-serif" font-size="10" fill="#f3ba40" opacity=".65" letter-spacing="1">TOPIC</text>
+  <text x="113" y="130" font-family="system-ui,sans-serif" font-size="10" fill="#d49e1a" opacity=".65" letter-spacing="1">TOPIC</text>
   <rect x="110" y="136" width="260" height="36" rx="8" fill="#242424" stroke="#505050" stroke-width="1">
-    <animate attributeName="stroke" values="#505050;#505050;#f3ba40;#505050" dur="11s" begin="0s" fill="freeze" keyTimes="0;.06;.09;.22"/>
+    <animate attributeName="stroke" values="#505050;#505050;#d49e1a;#505050" dur="11s" begin="0s" fill="freeze" keyTimes="0;.06;.09;.22"/>
   </rect>
 
   <text x="122" y="217" font-family="'DM Mono','SF Mono',monospace" font-size="13" fill="#fff" clip-path="url(#tClip)">alerts</text>
@@ -57,13 +57,13 @@
 
   <g>
     <animate attributeName="opacity" values="0;0;1;1;0;0" dur="11s" begin="0s" fill="freeze" keyTimes="0;.07;.09;.21;.23;1"/>
-    <rect class="cur" x="174" y="146" width="2" height="16" fill="#f3ba40"/>
+    <rect class="cur" x="174" y="146" width="2" height="16" fill="#d49e1a"/>
   </g>
 
   <!-- Message -->
-  <text x="113" y="203" font-family="system-ui,sans-serif" font-size="10" fill="#f3ba40" opacity=".65" letter-spacing="1">MESSAGE</text>
+  <text x="113" y="203" font-family="system-ui,sans-serif" font-size="10" fill="#d49e1a" opacity=".65" letter-spacing="1">MESSAGE</text>
   <rect x="110" y="209" width="260" height="36" rx="8" fill="#242424" stroke="#505050" stroke-width="1">
-    <animate attributeName="stroke" values="#505050;#505050;#f3ba40;#505050" dur="11s" begin="0s" fill="freeze" keyTimes="0;.28;.31;.50"/>
+    <animate attributeName="stroke" values="#505050;#505050;#d49e1a;#505050" dur="11s" begin="0s" fill="freeze" keyTimes="0;.28;.31;.50"/>
   </rect>
 
   <text x="122" y="289" font-family="system-ui,sans-serif" font-size="13" fill="#fff" clip-path="url(#mClip)">Hello from Beacon!</text>
@@ -75,7 +75,7 @@
 
   <g>
     <animate attributeName="opacity" values="0;0;1;1;0;0" dur="11s" begin="0s" fill="freeze" keyTimes="0;.30;.32;.49;.51;1"/>
-    <rect class="cur" x="266" y="220" width="2" height="16" fill="#f3ba40"/>
+    <rect class="cur" x="266" y="220" width="2" height="16" fill="#d49e1a"/>
   </g>
 
   <!-- Send button -->
@@ -91,7 +91,7 @@
   <g>
     <animateTransform attributeName="transform" type="translate" values="0 -140;0 -140;0 12;0 -3;0 0" dur="11s" begin="0s" fill="freeze" keyTimes="0;.73;.82;.86;.9" calcMode="spline" keySplines="0 0 1 1;.15 0 .25 1;.4 0 1 .4;0 0 .2 1"/>
 
-    <rect x="112" y="340" width="256" height="106" rx="10" fill="#1c1c1c" stroke="#f3ba40" stroke-width="1.2" opacity="0" filter="url(#notif-glow)">
+    <rect x="112" y="340" width="256" height="106" rx="10" fill="#2a2a2a" stroke="#d49e1a" stroke-width="1.2" opacity="0" filter="url(#notif-glow)">
       <animate attributeName="opacity" values="0;0;1;1" dur="11s" begin="0s" fill="freeze" keyTimes="0;.76;.82;1"/>
     </rect>
 
@@ -107,27 +107,27 @@
     </circle>
 
     <!-- App name -->
-    <text x="164" y="373" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#f3ba40" opacity="0">
+    <text x="164" y="373" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#d49e1a" opacity="0">
       <animate attributeName="opacity" values="0;0;1;1" dur="11s" begin="0s" fill="freeze" keyTimes="0;.78;.84;1"/>
       Beacon
     </text>
-    <text x="207" y="373" font-family="system-ui,sans-serif" font-size="8" fill="#666" opacity="0">
+    <text x="207" y="373" font-family="system-ui,sans-serif" font-size="8" fill="#888" opacity="0">
       <animate attributeName="opacity" values="0;0;1;1" dur="11s" begin="0s" fill="freeze" keyTimes="0;.78;.84;1"/>
       now
     </text>
 
     <!-- Title -->
-    <rect x="126" y="396" width="130" height="7" rx="3.5" fill="#f3ba40" opacity="0">
+    <rect x="126" y="396" width="130" height="7" rx="3.5" fill="#d49e1a" opacity="0">
       <animate attributeName="opacity" values="0;0;.7;.7" dur="11s" begin="0s" fill="freeze" keyTimes="0;.79;.85;1"/>
     </rect>
     <!-- Body -->
-    <rect x="126" y="411" width="200" height="5" rx="2.5" fill="#888" opacity="0">
+    <rect x="126" y="411" width="200" height="5" rx="2.5" fill="#aaa" opacity="0">
       <animate attributeName="opacity" values="0;0;.5;.5" dur="11s" begin="0s" fill="freeze" keyTimes="0;.81;.87;1"/>
     </rect>
-    <rect x="126" y="422" width="160" height="5" rx="2.5" fill="#666" opacity="0">
+    <rect x="126" y="422" width="160" height="5" rx="2.5" fill="#888" opacity="0">
       <animate attributeName="opacity" values="0;0;.35;.35" dur="11s" begin="0s" fill="freeze" keyTimes="0;.83;.89;1"/>
     </rect>
-    <rect x="126" y="433" width="90" height="5" rx="2.5" fill="#555" opacity="0">
+    <rect x="126" y="433" width="90" height="5" rx="2.5" fill="#777" opacity="0">
       <animate attributeName="opacity" values="0;0;.2;.2" dur="11s" begin="0s" fill="freeze" keyTimes="0;.85;.91;1"/>
     </rect>
   </g>
