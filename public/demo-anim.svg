@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 680" width="480" height="680">
+  <defs>
+    <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f4d157"/>
+      <stop offset="100%" stop-color="#ea9322"/>
+    </linearGradient>
+    <linearGradient id="redBadge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ff3333"/>
+      <stop offset="100%" stop-color="#cc2200"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="topicClip">
+      <rect x="160" y="228" width="0" height="22">
+        <animate attributeName="width" values="0;0;160;160" dur="3s" begin="0.8s" fill="freeze" keyTimes="0;0.4;0.9;1" calcMode="spline" keySplines="0 0 1 1;0.4 0 0.2 1;0 0 1 1"/>
+      </rect>
+    </clipPath>
+    <clipPath id="msgClip">
+      <rect x="160" y="302" width="0" height="22">
+        <animate attributeName="width" values="0;0;260;260" dur="3s" begin="4.2s" fill="freeze" keyTimes="0;0.4;0.9;1" calcMode="spline" keySplines="0 0 1 1;0.4 0 0.2 1;0 0 1 1"/>
+      </rect>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="480" height="680" rx="16" fill="#19171c"/>
+  <rect x="2" y="2" width="476" height="676" rx="14" fill="none" stroke="#505050" stroke-width="1" opacity="0.4"/>
+
+  <!-- Phone body -->
+  <rect x="80" y="40" width="320" height="600" rx="36" fill="#111" stroke="url(#goldGrad)" stroke-width="2.5"/>
+  <!-- Screen -->
+  <rect x="96" y="66" width="288" height="555" rx="10" fill="#1a1a1a"/>
+  <!-- Screen inner -->
+  <rect x="100" y="70" width="280" height="547" rx="6" fill="#0f0f0f"/>
+  <!-- Camera -->
+  <circle cx="240" cy="56" r="5" fill="url(#goldGrad)" opacity="0.4"/>
+  <!-- Speaker -->
+  <rect x="225" y="54" width="30" height="3" rx="1.5" fill="url(#goldGrad)" opacity="0.2"/>
+
+  <!-- ── App Header ── -->
+  <rect x="100" y="70" width="280" height="44" fill="#1a1a1a" rx="6"/>
+  <rect x="100" y="108" width="280" height="1" fill="#505050" opacity="0.3"/>
+  <text x="240" y="96" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="600" fill="#fff">Beacon</text>
+
+  <!-- ── Topic label + input ── -->
+  <text x="116" y="158" font-family="system-ui, sans-serif" font-size="11" fill="#f3ba40" opacity="0.7" letter-spacing="1">TOPIC</text>
+  <rect x="112" y="166" width="256" height="38" rx="8" fill="#242424" stroke="#505050" stroke-width="1"/>
+  <!-- Topic text (revealed via clip-path) -->
+  <text x="160" y="250" font-family="'DM Mono', 'SF Mono', monospace" font-size="14" fill="#fff" clip-path="url(#topicClip)" text-anchor="start">alerts</text>
+  <!-- Topic placeholder (fades out) -->
+  <text x="126" y="249" font-family="system-ui, sans-serif" font-size="12" fill="#666" text-anchor="start">
+    <animate attributeName="opacity" values="1;1;0;0" dur="4s" begin="0s" fill="freeze" keyTimes="0;0.3;0.5;1"/>
+    Enter topic
+  </text>
+  <!-- Cursor 1 (topic field) -->
+  <rect x="160" y="234" width="2" height="18" fill="#f3ba40">
+    <animate attributeName="opacity" values="1;0;0;1;0" dur="0.8s" begin="0s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;0;0;0" dur="4s" begin="0s" fill="freeze"/>
+  </rect>
+
+  <!-- ── Message label + input ── -->
+  <text x="116" y="238" font-family="system-ui, sans-serif" font-size="11" fill="#f3ba40" opacity="0.7" letter-spacing="1">
+    MESSAGE
+    <animate attributeName="opacity" values="0.7;0.7" dur="4.2s" begin="0s"/>
+  </text>
+  <rect x="112" y="246" width="256" height="38" rx="8" fill="#242424" stroke="#505050" stroke-width="1">
+    <animate attributeName="stroke" values="#505050;#505050;#f3ba40;#505050" dur="3s" begin="3.8s" fill="freeze"/>
+  </rect>
+
+  <!-- Message text (revealed via clip-path) -->
+  <text x="160" y="324" font-family="system-ui, sans-serif" font-size="14" fill="#fff" clip-path="url(#msgClip)" text-anchor="start">Hello from Beacon!</text>
+  <!-- Message placeholder (fades out) -->
+  <text x="126" y="324" font-family="system-ui, sans-serif" font-size="12" fill="#666" text-anchor="start">
+    <animate attributeName="opacity" values="0;0;1;1;0;0" dur="7s" begin="0s" fill="freeze" keyTimes="0;0.5;0.52;0.7;0.75;1"/>
+    Enter message
+  </text>
+  <!-- Cursor 2 (message field) -->
+  <rect x="160" y="308" width="2" height="18" fill="#f3ba40" opacity="0">
+    <animate attributeName="opacity" values="0;0;1;0;1;0;1;0;1;0;1;0" dur="3s" begin="4.2s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;0;0;0" dur="7.2s" begin="0s" fill="freeze"/>
+  </rect>
+
+  <!-- ── Send button ── -->
+  <rect x="170" y="300" width="140" height="40" rx="20" fill="url(#goldGrad)" opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" dur="7s" begin="0s" fill="freeze" keyTimes="0;0.9;0.95;1"/>
+  </rect>
+  <text x="240" y="325" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#000" opacity="0" letter-spacing="1">
+    SEND NOTIFICATION
+    <animate attributeName="opacity" values="0;0;1;1" dur="7s" begin="0s" fill="freeze" keyTimes="0;0.9;0.95;1"/>
+  </text>
+  <!-- Button pulse -->
+  <rect x="170" y="300" width="140" height="40" rx="20" fill="url(#goldGrad)" opacity="0">
+    <animate attributeName="opacity" values="0;0;0.6;0;0.6;0" dur="7.5s" begin="0s" fill="freeze" keyTimes="0;0.93;0.95;0.97;0.99;1"/>
+  </rect>
+
+  <!-- ── Notification Card ── -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 -120;0 -120;0 0;0 0" dur="10s" begin="0s" fill="freeze" keyTimes="0;0.8;0.95;1" calcMode="spline" keySplines="0 0 1 1;0.3 0 0.2 1;0 0 1 1"/>
+    <rect x="112" y="380" width="256" height="110" rx="10" fill="#1c1c1c" stroke="#f3ba40" stroke-width="1.5" opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1" dur="10s" begin="0s" fill="freeze" keyTimes="0;0.82;0.88;1"/>
+    </rect>
+
+    <!-- Notification app icon -->
+    <rect x="126" y="394" width="32" height="32" rx="6" fill="none" stroke="url(#goldGrad)" stroke-width="1.2" opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1" dur="10s" begin="0s" fill="freeze" keyTimes="0;0.82;0.88;1"/>
+    </rect>
+    <!-- Bell in icon -->
+    <path d="M142,402c-1.5,0-2.5,1.2-2.5,2.8v1.5l-1.5,1.5c-0.6,0.6-0.4,1.5,0,2c1.8,1,4,1.8,6.2,1.8s4.4-0.8,6.2-1.8c0.4-0.5,0.6-1.4,0-2l-1.5-1.5v-1.5c0-1.6-1-2.8-2.5-2.8z" fill="none" stroke="url(#goldGrad)" stroke-width="0.8" opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1" dur="10s" begin="0s" fill="freeze" keyTimes="0;0.82;0.88;1"/>
+    </path>
+    <circle cx="142" cy="416" r="1.2" fill="none" stroke="url(#goldGrad)" stroke-width="0.6" opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1" dur="10s" begin="0s" fill="freeze" keyTimes="0;0.82;0.88;1"/>
+    </circle>
+
+    <!-- App name -->
+    <text x="166" y="414" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#f3ba40" opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1" dur="10s" begin="0s" fill="freeze" keyTimes="0;0.82;0.88;1"/>
+      Beacon
+    </text>
+    <text x="210" y="414" font-family="system-ui, sans-serif" font-size="9" fill="#666" opacity="0">
+      <animate attributeName="opacity" values="0;0;1;1" dur="10s" begin="0s" fill="freeze" keyTimes="0;0.82;0.88;1"/>
+      now
+    </text>
+
+    <!-- Notification title -->
+    <rect x="126" y="436" width="140" height="7" rx="3.5" fill="#f3ba40" opacity="0">
+      <animate attributeName="opacity" values="0;0;0.7;0.7" dur="10s" begin="0s" fill="freeze" keyTimes="0;0.84;0.9;1"/>
+    </rect>
+    <!-- Notification body -->
+    <rect x="126" y="452" width="220" height="5" rx="2.5" fill="#888" opacity="0">
+      <animate attributeName="opacity" values="0;0;0.5;0.5" dur="10s" begin="0s" fill="freeze" keyTimes="0;0.86;0.92;1"/>
+    </rect>
+    <rect x="126" y="464" width="180" height="5" rx="2.5" fill="#666" opacity="0">
+      <animate attributeName="opacity" values="0;0;0.35;0.35" dur="10s" begin="0s" fill="freeze" keyTimes="0;0.88;0.94;1"/>
+    </rect>
+    <rect x="126" y="476" width="100" height="5" rx="2.5" fill="#555" opacity="0">
+      <animate attributeName="opacity" values="0;0;0.2;0.2" dur="10s" begin="0s" fill="freeze" keyTimes="0;0.9;0.96;1"/>
+    </rect>
+  </g>
+
+  <!-- Red badge on notification card -->
+  <circle cx="352" cy="388" r="16" fill="url(#redBadge)" opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" dur="10s" begin="0s" fill="freeze" keyTimes="0;0.89;0.93;1"/>
+    <animate attributeName="r" values="16;18;16" dur="10s" begin="9.3s" repeatCount="indefinite"/>
+  </circle>
+  <text x="352" y="394" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#fff" opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" dur="10s" begin="0s" fill="freeze" keyTimes="0;0.89;0.93;1"/>
+    1
+  </text>
+
+  <!-- Chevron left (home bar) -->
+  <rect x="216" y="618" width="48" height="4" rx="2" fill="url(#goldGrad)" opacity="0.15"/>
+
+  <!-- ── Step indicators ── -->
+  <!-- Step 1: Topic -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1;0" dur="12s" begin="0s" fill="freeze" keyTimes="0;0.05;0.1;0.3;0.35"/>
+    <circle cx="440" cy="196" r="3" fill="#f3ba40"/>
+    <text x="448" y="200" font-family="'DM Mono', monospace" font-size="9" fill="#666">Type topic</text>
+  </g>
+  <!-- Step 2: Message -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1;0" dur="12s" begin="0s" fill="freeze" keyTimes="0;0.35;0.4;0.65;0.7"/>
+    <circle cx="440" cy="276" r="3" fill="#f3ba40"/>
+    <text x="448" y="280" font-family="'DM Mono', monospace" font-size="9" fill="#666">Type message</text>
+  </g>
+  <!-- Step 3: Send -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1;0" dur="12s" begin="0s" fill="freeze" keyTimes="0;0.7;0.75;0.85;0.9"/>
+    <circle cx="440" cy="330" r="3" fill="#f3ba40"/>
+    <text x="448" y="334" font-family="'DM Mono', monospace" font-size="9" fill="#666">Press send</text>
+  </g>
+  <!-- Step 4: Notification -->
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;0;1;1" dur="12s" begin="0s" fill="freeze" keyTimes="0;0.85;0.92;1"/>
+    <circle cx="440" cy="440" r="3" fill="#f3ba40"/>
+    <text x="448" y="444" font-family="'DM Mono', monospace" font-size="9" fill="#666">Notification!</text>
+  </g>
+</svg>

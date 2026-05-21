@@ -20,7 +20,6 @@ const C = {
 }
 
 export default function LandingPage() {
-  const [activeTab, setActiveTab] = useState('curl')
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
@@ -133,18 +132,26 @@ export default function LandingPage() {
             ))}
           </div>
 
-          <div style={s.codeBlock}>
-            <div style={s.codeHeader}>
-              <div style={s.codeTabs}>
-                {(['curl', 'js', 'python'] as const).map(tab => (
-                  <div key={tab} onClick={() => setActiveTab(tab)}
-                    style={{ ...s.codeTabHead, ...(activeTab === tab ? s.codeTabHeadActive : {}) }}
-                  >{tab === 'js' ? 'javascript' : tab}</div>
-                ))}
-              </div>
+          {/* ── Live Demo ── */}
+          <div style={s.demoSection}>
+            <div style={s.demoContainer}>
+              <object data="/demo-anim.svg" type="image/svg+xml" style={s.demoSvg} aria-label="Demo animation showing Beacon notification flow" />
             </div>
-            <div style={s.codeBody}>
-              <CodeContent tab={activeTab} />
+            <div style={s.demoSteps}>
+              {[
+                { num: 1, title: 'Pick a topic', desc: 'Type any topic name — topics are created on demand, no setup needed.' },
+                { num: 2, title: 'Write your message', desc: 'Plain text or JSON. Add a priority level (low, high, urgent) if you want.' },
+                { num: 3, title: 'Send it', desc: 'Hit send or POST via curl. The message arrives in under a second.' },
+                { num: 4, title: 'Get notified', desc: 'A notification pops on your device. SSE delivers it in real-time.' },
+              ].map((step, i) => (
+                <div key={i} style={s.demoStep}>
+                  <div style={s.demoNum}>{step.num}</div>
+                  <div>
+                    <div style={s.demoStepTitle}>{step.title}</div>
+                    <div style={s.demoStepDesc}>{step.desc}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -219,29 +226,6 @@ export default function LandingPage() {
       </footer>
     </div>
   )
-}
-
-/* ── Components ── */
-
-function Bar({ label, pct }: { label: string; pct: number }) {
-  return (
-    <div style={s.barRow}>
-      <div style={s.barLabel}>{label}</div>
-      <div style={s.barTrack}>
-        <div style={{ ...s.barFill, width: `${pct}%` }} />
-      </div>
-      <div style={s.barPct}>{pct}%</div>
-    </div>
-  )
-}
-
-function CodeContent({ tab }: { tab: string }) {
-  const code = tab === 'curl'
-    ? '# Send a notification\ncurl -X POST http://localhost:3000/api/deploy \\\n  -H "Content-Type: application/json" \\\n  -d \'{\n  "title": "Deploy complete",\n  "message": "v2.4.1 is live",\n  "priority": "high"\n}\''
-    : tab === 'js'
-    ? '// Subscribe to a topic\nconst es = new EventSource(\'/api/deploy\')\n\nes.onmessage = (e) => {\n  const msg = JSON.parse(e.data)\n  console.log(msg)\n}'
-    : '# Publish from Python\nimport requests\n\nrequests.post("http://localhost:3000/api/alerts", json={\n    "message": "Disk usage at 92%",\n    "priority": "urgent",\n})'
-  return <>{code}</>
 }
 
 /* ── Styles ── */
@@ -321,7 +305,6 @@ const s: Record<string, React.CSSProperties> = {
     padding: '14px 28px', border: `1px solid ${C.border}`, borderRadius: 8,
     fontSize: 13, fontFamily: "'DM Mono', monospace", textDecoration: 'none',
   },
-  heroStat: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 },
   /* Section */
   section: { padding: '80px 24px', position: 'relative' as const, zIndex: 1 },
   sectionInner: { maxWidth: 1100, margin: '0 auto' },
@@ -347,23 +330,23 @@ const s: Record<string, React.CSSProperties> = {
   featureIcon: { width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, marginBottom: 18 },
   featureTitle: { fontSize: 13, fontWeight: 600, marginBottom: 10, letterSpacing: '1px', color: '#fff' },
   featureDesc: { fontSize: 14, color: C.text, lineHeight: 1.65 },
-  /* Bars */
-  distDesc: { fontSize: 14, color: C.text, lineHeight: 1.7, marginBottom: 40, maxWidth: 600 },
-  bars: { maxWidth: 600 },
-  barRow: { display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 },
-  barLabel: { width: 180, fontSize: 13, color: '#fff', letterSpacing: '0.5px', flexShrink: 0 },
-  barTrack: { flex: 1, height: 8, background: C.track, borderRadius: 4, overflow: 'hidden' },
-  barFill: { height: '100%', background: `linear-gradient(90deg, ${C.grad1}, ${C.grad2})`, borderRadius: 4, transition: 'width 0.6s' },
-  barPct: { width: 36, fontSize: 13, fontWeight: 600, color: C.gold, fontFamily: "'DM Mono', monospace", textAlign: 'right' as const },
-  /* Timeline */
-  roadMap: { display:'none'},
-  timeline: { maxWidth: 700 },
-  tlItem: { display: 'flex', gap: 24, marginBottom: 36, position: 'relative' as const },
-  tlNum: { fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 600, color: C.gold, width: 32, flexShrink: 0 },
-  tlContent: { borderLeft: `1px solid ${C.gold}30`, paddingLeft: 24, paddingBottom: 4 },
-  tlTitle: { fontSize: 17, fontWeight: 500, marginBottom: 4, color: '#fff' },
-  tlDate: { fontSize: 12, color: C.goldLight, fontFamily: "'DM Mono', monospace", marginBottom: 8 },
-  tlDesc: { fontSize: 14, color: C.text, lineHeight: 1.65 },
+  /* Demo */
+  demoSection: {
+    display: 'flex', gap: 48, alignItems: 'center', marginBottom: 48,
+    flexWrap: 'wrap' as const, justifyContent: 'center',
+  },
+  demoContainer: { flex: '0 0 320px' },
+  demoSvg: { width: 320, height: 'auto', display: 'block' },
+  demoSteps: { flex: '1 1 320px', display: 'flex', flexDirection: 'column' as const, gap: 18 },
+  demoStep: { display: 'flex', gap: 14, alignItems: 'flex-start' },
+  demoNum: {
+    width: 28, height: 28, borderRadius: '50%', background: `${C.gold}18`,
+    border: `1px solid ${C.gold}30`, color: C.goldLight,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: 12, fontWeight: 600, flexShrink: 0, fontFamily: "'DM Mono', monospace",
+  },
+  demoStepTitle: { fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 3 },
+  demoStepDesc: { fontSize: 13, color: C.textMuted, lineHeight: 1.55 },
   /* Setup */
   setupGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginBottom: 40 },
   setupCard: { background: C.card, border: `1px solid ${C.border}60`, borderRadius: 12, padding: 28 },
@@ -375,14 +358,6 @@ const s: Record<string, React.CSSProperties> = {
     padding: 12, fontSize: 11, fontFamily: "'DM Mono', monospace", color: C.textMuted,
     overflowX: 'auto' as const, whiteSpace: 'pre-wrap' as const, margin: 0,
   },
-  /* Code */
-  codeBlock: { background: C.card, border: `1px solid ${C.border}60`, borderRadius: 12, overflow: 'hidden', marginBottom: 40 },
-  codeHeader: { padding: '12px 20px', borderBottom: `1px solid ${C.border}60`, background: C.gray },
-  codeTabs: { display: 'flex', gap: 4 },
-  codeTabHead: { padding: '4px 12px', fontSize: 11, fontFamily: "'DM Mono', monospace", color: C.textMuted, borderRadius: 4, cursor: 'pointer' },
-  codeTabHeadActive: { background: `${C.gold}20`, color: C.goldLight },
-  codeBody: { padding: 20, fontSize: 13, fontFamily: "'DM Mono', monospace", lineHeight: 1.8, color: C.text, whiteSpace: 'pre-wrap' as const },
-
   /* Tech */
   techSection: { textAlign: 'center' as const, paddingTop: 16 },
   techLabel: { fontSize: 11, color: C.textMuted, fontFamily: "'DM Mono', monospace", letterSpacing: 2, marginBottom: 16 },
