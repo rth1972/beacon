@@ -29,6 +29,18 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_messages_topic     ON messages(topic);
   CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp);
   CREATE INDEX IF NOT EXISTS idx_messages_expires   ON messages(expires_at);
+
+  CREATE TABLE IF NOT EXISTS subscriptions (
+    id        TEXT PRIMARY KEY,
+    topic     TEXT NOT NULL,
+    endpoint  TEXT NOT NULL,
+    p256dh    TEXT NOT NULL,
+    auth      TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_subscriptions_topic ON subscriptions(topic);
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_subscriptions_endpoint_topic ON subscriptions(endpoint, topic);
 `)
 
 export interface DBMessage {
@@ -135,6 +147,42 @@ export const messageDb = {
   purgeExpired() {
     const result = deleteExpiredStmt.run(Date.now())
     return result.changes
+  },
+}
+
+export interface Subscription {
+  id: string
+  topic: string
+  endpoint: string
+  p256dh: string
+  auth: string
+  created_at: number
+}
+
+const insertSubStmt = db.prepare(`
+  INSERT OR REPLACE INTO subscriptions (id, topic, endpoint, p256dh, auth, created_at)
+  VALUES (@id, @topic, @endpoint, @p256dh, @auth, @created_at)
+`)
+
+const deleteSubStmt = db.prepare('DELETE FROM subscriptions WHERE endpoint = ? AND topic = ?')
+const getSubsByTopicStmt = db.prepare('SELECT * FROM subscriptions WHERE topic = ?')
+const getSubByEndpointStmt = db.prepare('SELECT * FROM subscriptions WHERE endpoint = ? AND topic = ?')
+
+export const subDb = {
+  upsert(sub: Subscription) {
+    insertSubStmt.run(sub)
+  },
+
+  delete(endpoint: string, topic: string) {
+    return deleteSubStmt.run(endpoint, topic).changes
+  },
+
+  getByTopic(topic: string): Subscription[] {
+    return getSubsByTopicStmt.all(topic) as Subscription[]
+  },
+
+  getByEndpoint(endpoint: string, topic: string): Subscription | undefined {
+    return getSubByEndpointStmt.get(endpoint, topic) as Subscription | undefined
   },
 }
 

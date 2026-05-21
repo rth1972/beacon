@@ -61,6 +61,9 @@ export default function TopicPage() {
   const [autoScroll, setAutoScroll]   = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [pushEnabled, setPushEnabled] = useState(false)
+  const [pushMsg, setPushMsg] = useState<string | null>(null)
+  const pushSupported = typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window
   const lastTsRef = useRef<number>(0)
   const listRef = useRef<HTMLDivElement>(null)
 
@@ -121,6 +124,23 @@ export default function TopicPage() {
     }
   }, [])
 
+  // Check existing push subscription
+  useEffect(() => {
+    if (!pushSupported) return
+    navigator.serviceWorker.ready.then(reg => reg.pushManager.getSubscription()).then(sub => {
+      setPushEnabled(!!sub)
+    })
+  }, [pushSupported])
+
+  function urlBase64ToUint8Array(base64: string): Uint8Array {
+    const padding = '='.repeat((4 - base64.length % 4) % 4)
+    const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/')
+    const raw = window.atob(b64)
+    const arr = new Uint8Array(raw.length)
+    for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i)
+    return arr
+  }
+
   useEffect(() => {
     if (autoScroll && listRef.current) {
       listRef.current.scrollTop = 0
@@ -136,6 +156,94 @@ export default function TopicPage() {
         localStorage.setItem('ntfy_muted', JSON.stringify(updated))
       } catch { /* ignore */ }
       return next
+    })
+  }
+
+  async function togglePush() {
+    setPushMsg(null)
+    if (!window.isSecureContext) {
+      setPushMsg('Push requires HTTPS — use a tunnel like ngrok or localhost')
+      return
+    }
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setPushMsg('Push not supported in this browser')
+      return
+    }
+    if (Notification.permission === 'denied') {
+      setPushMsg('Notification permission was denied — enable it in Settings')
+      return
+    }
+
+    if (pushEnabled) {
+      try {
+        const reg = await getRegistration()
+        const sub = await reg.pushManager.getSubscription()
+        if (sub) {
+          await sub.unsubscribe()
+          await fetch(`/api/subscribe?endpoint=${encodeURIComponent(sub.endpoint)}&topic=${encodeURIComponent(topic)}`, { method: 'DELETE' })
+        }
+      } catch { /* ignore unsubscribe errors */ }
+      setPushEnabled(false)
+    } else {
+      try {
+        const reg = await getRegistration()
+        const existing = await reg.pushManager.getSubscription()
+        if (existing) {
+          setPushEnabled(true)
+          return
+        }
+
+        if (Notification.permission === 'default') {
+          const perm = await Notification.requestPermission()
+          if (perm !== 'granted') {
+            setPushMsg('Notification permission not granted')
+            return
+          }
+        }
+
+        const res = await fetch('/api/subscribe')
+        if (!res.ok) { setPushMsg('Failed to get push key from server'); return }
+        const { publicKey } = await res.json()
+
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
+        })
+
+        const json = sub.toJSON()
+        const save = await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic,
+            endpoint: json.endpoint,
+            p256dh: json.keys!.p256dh,
+            auth: json.keys!.auth,
+          }),
+        })
+        if (!save.ok) { setPushMsg('Failed to save subscription on server'); return }
+        setPushEnabled(true)
+      } catch (err: any) {
+        setPushMsg(err?.message || 'Push subscription failed')
+      }
+    }
+  }
+
+  async function getRegistration(): Promise<ServiceWorkerRegistration> {
+    let reg = await navigator.serviceWorker.getRegistration()
+    if (!reg) {
+      reg = await navigator.serviceWorker.register('/sw.js')
+    }
+    if (reg.active) return reg
+    return new Promise(resolve => {
+      const target = reg.installing || reg.waiting
+      if (!target) { resolve(reg); return }
+      target.addEventListener('statechange', function handler() {
+        if (target.state === 'activated') {
+          target.removeEventListener('statechange', handler)
+          resolve(reg)
+        }
+      })
     })
   }
 
@@ -201,27 +309,49 @@ export default function TopicPage() {
     <AppShell>
       <div style={{ maxWidth: 740, margin: '0 auto', padding: '32px 24px' }}>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
           <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)' }}>
             📡 <code style={{ fontFamily: 'monospace' }}>{topic}</code>
           </h1>
           <StatusDot status={status} />
-          <button
-            onClick={toggleMute}
-            title={isMuted ? 'Unmute' : 'Mute notifications for this topic'}
-            style={{
-              marginLeft: 'auto',
-              background: 'var(--bg-btn-off)',
-              border: '1px solid var(--border)',
-              borderRadius: 6,
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-              fontSize: 13,
-              padding: '4px 8px',
-            }}
-          >
-            {isMuted ? '🔔 Unmute' : '🔕 Mute'}
-          </button>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
+            <button
+              onClick={togglePush}
+              style={{
+                background: pushEnabled ? 'var(--accent)' : 'none',
+                border: `1px solid ${pushEnabled ? 'var(--accent)' : 'var(--border)'}`,
+                borderRadius: 6,
+                color: pushEnabled ? '#fff' : 'var(--text-muted)',
+                fontSize: 12,
+                cursor: 'pointer',
+                padding: '4px 10px',
+                fontWeight: pushEnabled ? 600 : 400,
+              }}
+              title={pushEnabled ? 'Push notifications enabled' : 'Enable push notifications'}
+            >
+              {pushEnabled ? '📡 Push on' : '📡 Push off'}
+            </button>
+            {pushMsg && (
+              <span style={{ fontSize: 11, color: 'var(--type-error-icon-fg)', maxWidth: 200, lineHeight: 1.3 }}>
+                {pushMsg}
+              </span>
+            )}
+            <button
+              onClick={toggleMute}
+              title={isMuted ? 'Unmute' : 'Mute notifications for this topic'}
+              style={{
+                background: 'var(--bg-btn-off)',
+                border: '1px solid var(--border)',
+                borderRadius: 6,
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                fontSize: 12,
+                padding: '4px 8px',
+              }}
+            >
+              {isMuted ? '🔔 Unmute' : '🔕 Mute'}
+            </button>
+          </div>
         </div>
 
         {/* Send form */}
@@ -393,7 +523,7 @@ export default function TopicPage() {
                 }}
               >
                 Clear selected
-              </button>
+            </button>
             </>
           )}
 

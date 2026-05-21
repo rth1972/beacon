@@ -160,7 +160,7 @@ export default function LandingPage() {
         <div style={s.heroInner}>
           <div style={s.heroBadge}>
             <span style={s.badgeDot} />
-            SELF-HOSTED · OPEN SOURCE · ZERO CLOUD
+            SELF-HOSTED · OPEN SOURCE · PWA PUSH
           </div>
           <h1 style={s.heroTitle}>
             PUSH NOTIFICATION<br />
@@ -189,9 +189,9 @@ export default function LandingPage() {
           <div style={s.featureGrid}>
             {[
               { icon: '📡', title: 'REAL-TIME SSE', desc: 'Server-Sent Events deliver messages the moment they arrive. No polling, no WebSocket overhead.' },
+              { icon: '📱', title: 'WEB PUSH', desc: 'Get push notifications on your phone via PWA. Works on Android Chrome and iOS Safari — no app store needed.' },
               { icon: '🗄️', title: 'PERSISTENT HISTORY', desc: 'SQLite-backed storage means you never miss a message. Reconnect and replay what you missed.' },
               { icon: '🔐', title: 'TOKEN AUTH', desc: 'Secure your server with a single environment variable. Browser login page + Bearer token for scripts.' },
-              { icon: '🖥️', title: 'OS NATIVE ALERTS', desc: 'System notifications on macOS, Windows, and Linux. Fires automatically via osascript, PowerShell, notify-send.' },
               { icon: '✈️', title: 'TELEGRAM RELAY', desc: 'Forward every message to a Telegram bot. Get notified anywhere when you are away from your desk.' },
               { icon: '⏱️', title: 'TTL & AUTO-CLEANUP', desc: 'Set an expiry on any message. Expired entries are hidden from queries and purged every 10 minutes.' },
             ].map((f, i) => (
@@ -268,8 +268,8 @@ export default function LandingPage() {
           { val: '0', label: 'External deps' },
           { val: '<1s', label: 'Delivery latency' },
           { val: '∞', label: 'Unlimited topics' },
-          { val: '3', label: 'OS platforms' },
-          { val: '⚡', label: 'SSE protocol' },
+          { val: '📱', label: 'Web Push' },
+          { val: '⚡', label: 'SSE real-time' },
         ].map((s_, i) => (
           <div key={i} style={s.statItem}>
             <div style={s.statVal}>{s_.val}</div>

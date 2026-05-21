@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server'
 import { execFile } from 'child_process'
 import { subscribe, unsubscribe, publish, getSubscriberCount, type NotifyMessage, type MessageType } from '@/app/store'
-import { messageDb } from '@/app/db'
+import { messageDb, subDb } from '@/app/db'
 import { isAuthorized, isAuthorizedBrowser, unauthorizedResponse } from '@/app/auth'
 import { sendTelegram } from '@/app/telegram'
+import { pushSender } from '@/app/vapid'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -58,6 +59,36 @@ function systemNotify(title: string, message: string, priority: string, type?: M
       if (err) console.error('[notify] notify-send error:', err.message)
     })
   }
+}
+
+async function notifyWebPush(topic: string, msg: NotifyMessage) {
+  const subs = subDb.getByTopic(topic)
+  if (subs.length === 0) return
+
+  const payload = JSON.stringify({
+    title: msg.title || `[${topic}]`,
+    message: msg.message,
+    topic,
+    priority: msg.priority,
+    url: msg.url,
+  })
+
+  const results = await Promise.allSettled(subs.map(sub =>
+    pushSender.sendNotification(
+      { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+      payload,
+    )
+  ))
+
+  // Remove invalid subscriptions
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      const err = r.reason
+      if (err?.statusCode === 410 || err?.statusCode === 404) {
+        subDb.delete(subs[i].endpoint, topic)
+      }
+    }
+  })
 }
 
 // ─── GET /api/[topic]  →  SSE subscription ──────────────────────────────────
@@ -188,6 +219,9 @@ export async function POST(
 
   // Telegram — fire and forget
   sendTelegram(msg).catch(err => console.error('[telegram] error:', err))
+
+  // Web Push — send to all subscribers of this topic
+  notifyWebPush(topic, msg).catch(err => console.error('[webpush] error:', err))
 
   return Response.json({ ok: true, id: msg.id, delivered })
 }
