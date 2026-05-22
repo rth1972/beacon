@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#f3ba40',
+  themeColor: '#5a5a50',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -20,9 +20,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" type="image/png" href="/favicon.png" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-        <meta name="theme-color" content="#f3ba40" />
+        <meta name="theme-color" content="#5a5a50" id="tc" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          try {
+            var t=JSON.parse(localStorage.getItem('ntfy_theme')||'{}');
+            document.getElementById('tc').content=t.light!==false?'#5a5a50':'#f3ba40';
+          }catch(e){}
+        `}} />
       </head>
       <body>
         <ThemeProvider>

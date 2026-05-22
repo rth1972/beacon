@@ -28,16 +28,16 @@ const darkTheme: Theme = {
 }
 
 const lightTheme: Theme = {
-  bg: '#f5f5f0', gray: '#e8e8e3', card: '#ffffff',
-  gold: '#c9950e', goldLight: '#b8860b', goldDark: '#8b6914', orange: '#d4511a',
-  text: '#2a2a2a', textMuted: '#777777', border: '#d4d4cc', track: '#e0e0d8',
-  grad1: '#d49e1a', grad2: '#b8860b', heading: '#1a1a1a',
+  bg: '#e5e5e0', gray: '#c8c8c2', card: '#d4d4ce',
+  gold: '#5a5a50', goldLight: '#4a4a40', goldDark: '#3a3a30', orange: '#888880',
+  text: '#2a2a2a', textMuted: '#6a6a6a', border: '#b8b8b2', track: '#c0c0ba',
+  grad1: '#6a6a60', grad2: '#505050', heading: '#1a1a1a',
   heroBg: 'url(/hero-bg-light.svg)',
   heroOverlay: [
-    `linear-gradient(#f5f5f0E0, #f5f5f0)`,
-    `radial-gradient(ellipse at 50% 0%, #c9950e10 0%, transparent 0%)`,
-    `radial-gradient(ellipse at 20% 80%, #b8860b08 0%, transparent 0%)`,
-    `radial-gradient(ellipse at 80% 60%, #d49e1a08 0%, transparent 0%)`,
+    `linear-gradient(#e5e5e0E0, #e5e5e0)`,
+    `radial-gradient(ellipse at 50% 0%, #5a5a5008 0%, transparent 0%)`,
+    `radial-gradient(ellipse at 20% 80%, #4a4a4006 0%, transparent 0%)`,
+    `radial-gradient(ellipse at 80% 60%, #6a6a6006 0%, transparent 0%)`,
   ].join(', '),
   demoAnim: '/demo-anim-light.svg',
 }
@@ -81,7 +81,7 @@ export default function LandingPage() {
       {/* Nav */}
       <nav style={{ ...s.nav, ...(scrolled ? s.navSolid : s.navTop) }}>
         <div data-bn-inner style={s.navInner}>
-          <Link href="/" style={s.navLogo}>
+          <a href="/" onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }} style={s.navLogo}>
             <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
               <rect x="6" y="2" width="36" height="44" rx="6" stroke={C.gold} strokeWidth="2"/>
               <rect x="10" y="8" width="28" height="34" rx="2" stroke={C.gold} strokeWidth="0.5" opacity="0.35"/>
@@ -94,7 +94,7 @@ export default function LandingPage() {
               <text x="38" y="13.5" textAnchor="middle" fontFamily="sans-serif" fontSize="5" fontWeight="bold" fill="#fff">!</text>
             </svg>
             <span style={{ fontSize: 17, fontWeight: 600, color: C.text, letterSpacing: '-0.3px' }}>Beacon</span>
-          </Link>
+          </a>
 
           {/* Desktop links */}
           <div data-bn-desktop style={s.navLinks}>
@@ -130,7 +130,7 @@ export default function LandingPage() {
         <div data-bn-overlay style={s.mobileOverlay} onClick={() => setMenuOpen(false)}>
           <div style={s.mobilePanel} onClick={e => e.stopPropagation()}>
             <div style={s.mobileHeader}>
-              <span style={{ fontSize: 17, fontWeight: 600, color: C.heading }}>Beacon</span>
+              <a href="/" onClick={e => { e.preventDefault(); setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }} style={{ fontSize: 17, fontWeight: 600, color: C.heading, textDecoration: 'none' }}>Beacon</a>
               <button onClick={() => setMenuOpen(false)} style={s.mobileClose} aria-label="Close menu">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.text} strokeWidth="2" strokeLinecap="round">
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>

@@ -68,7 +68,7 @@ export default function Dashboard() {
   }
 
   const totalMsgs = topics.reduce((s, t) => s + t.count, 0)
-  const statusColor = loading ? '#f5a623' : '#2ecc71'
+  const statusColor = loading ? '#888880' : '#2ecc71'
 
   return (
     <AppShell>

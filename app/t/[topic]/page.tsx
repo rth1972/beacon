@@ -706,7 +706,7 @@ function MessageCard({ msg, selected, onToggleSelect, onDelete }: { msg: Message
 }
 
 function StatusDot({ status }: { status: 'connecting' | 'connected' | 'disconnected' }) {
-  const colors = { connecting: '#f5a623', connected: '#2ecc71', disconnected: '#e74c3c' }
+  const colors = { connecting: '#888880', connected: '#2ecc71', disconnected: '#e74c3c' }
   return (
     <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-label)' }}>
       <span style={{

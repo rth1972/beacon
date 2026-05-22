@@ -72,68 +72,68 @@
 
 /* ── Light theme overrides ──────────────────────────────────────────────── */
 [data-theme="light"] {
-  --bg:           #f5f5f5;
-  --bg-sidebar:   #ffffff;
-  --bg-card:      #ffffff;
-  --bg-input:     #f9f9f9;
-  --bg-code:      #f6f8fa;
-  --bg-code-hdr:  #eaeaea;
-  --bg-active:    #fff8e1;
-  --bg-tag:       #f0f0f0;
-  --bg-btn-off:   #e8e8e8;
+  --bg:           #e5e5e0;
+  --bg-sidebar:   #d8d8d2;
+  --bg-card:      #d4d4ce;
+  --bg-input:     #cfcfc9;
+  --bg-code:      #d0d0ca;
+  --bg-code-hdr:  #c8c8c2;
+  --bg-active:    #c5c5bf;
+  --bg-tag:       #cfcfc9;
+  --bg-btn-off:   #c5c5bf;
 
-  --border:       #e5e5e5;
-  --border-card:  #e0e0e0;
-  --border-input: #d0d0d0;
-  --border-code:  #e0e0e0;
-  --border-tag:   #d0d0d0;
+  --border:       #b8b8b2;
+  --border-card:  #b8b8b2;
+  --border-input: #b0b0aa;
+  --border-code:  #b8b8b2;
+  --border-tag:   #a8a8a2;
 
-  --text:         #111111;
-  --text-muted:   #555555;
-  --text-faint:   #aaaaaa;
-  --text-code:    #24292e;
-  --text-label:   #888888;
-  --text-topic:   #444444;
-  --text-no-topic:#aaaaaa;
+  --text:         #1a1a1a;
+  --text-muted:   #4a4a4a;
+  --text-faint:   #7a7a7a;
+  --text-code:    #2a2a2a;
+  --text-label:   #6a6a6a;
+  --text-topic:   #3a3a3a;
+  --text-no-topic:#7a7a7a;
 
-  --accent:       #d49e1a;
-  --accent-sidebar-border: #d49e1a;
-  --link:         #b8860b;
+  --accent:       #5a5a50;
+  --accent-sidebar-border: #5a5a50;
+  --link:         #4a4a40;
 
-  --priority-low-bg:      #f9f9f9;
-  --priority-default-bg:  #fff8e1;
-  --priority-high-bg:     #fffbeb;
-  --priority-urgent-bg:   #fff1f1;
+  --priority-low-bg:      #d4d4ce;
+  --priority-default-bg:  #d0d0ca;
+  --priority-high-bg:     #cacac4;
+  --priority-urgent-bg:   #c8c8c2;
 
-  --badge-low-bg:      #f0f0f0;
-  --badge-low-fg:      #666;
-  --badge-default-bg:  #fff3cd;
-  --badge-default-fg:  #d49e1a;
-  --badge-high-bg:     #fff3cd;
-  --badge-high-fg:     #b45309;
-  --badge-urgent-bg:   #ffe4e4;
-  --badge-urgent-fg:   #cc0000;
+  --badge-low-bg:      #c5c5bf;
+  --badge-low-fg:      #5a5a5a;
+  --badge-default-bg:  #c0c0ba;
+  --badge-default-fg:  #3a3a3a;
+  --badge-high-bg:     #babab4;
+  --badge-high-fg:     #2a2a2a;
+  --badge-urgent-bg:   #c5b5b5;
+  --badge-urgent-fg:   #8a2020;
 
   /* message types */
-  --type-info-border:    #f3ba40;
-  --type-info-bg:        #fffbeb;
-  --type-info-icon-bg:   #fff3cd;
-  --type-info-icon-fg:   #d49e1a;
+  --type-info-border:    #8a8a80;
+  --type-info-bg:        #d0d0ca;
+  --type-info-icon-bg:   #c5c5bf;
+  --type-info-icon-fg:   #4a4a40;
 
-  --type-success-border: #2ecc71;
-  --type-success-bg:     #f0faf4;
-  --type-success-icon-bg:#dcf5e7;
-  --type-success-icon-fg:#1a9e55;
+  --type-success-border: #3a8a5a;
+  --type-success-bg:     #cdd5ce;
+  --type-success-icon-bg:#c0ccc2;
+  --type-success-icon-fg:#2a6a40;
 
-  --type-warning-border: #f5a623;
-  --type-warning-bg:     #fffbeb;
-  --type-warning-icon-bg:#fff3cd;
-  --type-warning-icon-fg:#b45309;
+  --type-warning-border: #a0a098;
+  --type-warning-bg:     #d0ceca;
+  --type-warning-icon-bg:#c5c3bf;
+  --type-warning-icon-fg:#6a6a60;
 
-  --type-error-border:   #e74c3c;
-  --type-error-bg:       #fff5f5;
-  --type-error-icon-bg:  #ffe4e4;
-  --type-error-icon-fg:  #cc0000;
+  --type-error-border:   #c04040;
+  --type-error-bg:       #d4c8c8;
+  --type-error-icon-bg:  #c8b8b8;
+  --type-error-icon-fg:  #9a2020;
 }
 
 /* ── Base styles ────────────────────────────────────────────────────────── */
