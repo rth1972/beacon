@@ -98,7 +98,7 @@
     <animate attributeName="opacity" values="0;0;1;1;.6;1;.6;1;1" dur="11s" begin="0s" fill="freeze" keyTimes="0;.55;.57;.62;.64;.66;.68;.7;1"/>
     <animateTransform attributeName="transform" type="scale" values="1;1;.95;1" dur="11s" begin="0s" fill="freeze" keyTimes="0;.66;.69;.72"/>
     <rect x="172" y="282" width="136" height="36" rx="18" fill="url(#gg)" filter="url(#shadow-sm)"/>
-    <text x="240" y="305" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#e5e5e0" letter-spacing="1.5">SEND</text>
+    <text x="240" y="305" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#ffffff" letter-spacing="1.5">SEND</text>
   </g>
 
   <!-- Line separator -->

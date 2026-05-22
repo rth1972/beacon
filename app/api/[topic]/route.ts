@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { execFile } from 'child_process'
 import { subscribe, unsubscribe, publish, getSubscriberCount, type NotifyMessage, type MessageType } from '@/app/store'
-import { messageDb, subDb } from '@/app/db'
+import { messageDb, subDb, tokenDb, settingsDb, attachmentDb } from '@/app/db'
 import { isAuthorized, isAuthorizedBrowser, unauthorizedResponse } from '@/app/auth'
 import { sendTelegram } from '@/app/telegram'
 import { pushSender } from '@/app/vapid'
@@ -28,15 +28,11 @@ function esc(s: string) { return s.replace(/"/g, '\\"') }
 function systemNotify(title: string, message: string, priority: string, type?: MessageType, url?: string) {
   const emoji     = type ? TYPE_EMOJI[type] + ' ' : ''
   const fullTitle = emoji + title
-
   console.log(`[notify] platform=${process.platform} title="${fullTitle}" message="${message}"`)
-
   if (process.platform === 'darwin') {
     const script = `display notification "${esc(message)}" with title "${esc(fullTitle)}"`
-    console.log('[notify] using osascript:', script)
-    execFile('osascript', ['-e', script], (err, _stdout, stderr) => {
+    execFile('osascript', ['-e', script], (err) => {
       if (err) console.error('[notify] osascript error:', err.message)
-      if (stderr) console.error('[notify] osascript stderr:', stderr)
     })
   } else if (process.platform === 'win32') {
     const safeTitle = fullTitle.replace(/'/g, "''")
@@ -71,6 +67,7 @@ async function notifyWebPush(topic: string, msg: NotifyMessage) {
     topic,
     priority: msg.priority,
     url: msg.url,
+    actions: msg.actions,
   })
 
   const results = await Promise.allSettled(subs.map(sub =>
@@ -80,7 +77,6 @@ async function notifyWebPush(topic: string, msg: NotifyMessage) {
     )
   ))
 
-  // Remove invalid subscriptions
   results.forEach((r, i) => {
     if (r.status === 'rejected') {
       const err = r.reason
@@ -91,18 +87,45 @@ async function notifyWebPush(topic: string, msg: NotifyMessage) {
   })
 }
 
+async function relayToNtfy(msg: NotifyMessage) {
+  const settings = settingsDb.get(msg.topic)
+  if (!settings?.relay_url) return
+  try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (settings.relay_token) headers['Authorization'] = `Bearer ${settings.relay_token}`
+    await fetch(settings.relay_url.replace('{topic}', msg.topic), {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        title: msg.title,
+        message: msg.message,
+        priority: msg.priority,
+        tags: msg.tags,
+        topic: msg.topic,
+      }),
+    })
+  } catch (err) {
+    console.error('[relay] ntfy.sh error:', err)
+  }
+}
+
+function checkTokenAuth(req: NextRequest): boolean {
+  const token = req.headers.get('x-token') || req.nextUrl.searchParams.get('token') || ''
+  if (!token) return false
+  return !!tokenDb.findByToken(token)
+}
+
 // ─── GET /api/[topic]  →  SSE subscription ──────────────────────────────────
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ topic: string }> }
 ) {
-  if (!isAuthorized(req) && !isAuthorizedBrowser(req)) return unauthorizedResponse()
+  if (!isAuthorized(req) && !isAuthorizedBrowser(req) && !checkTokenAuth(req)) return unauthorizedResponse()
 
   const { topic } = await context.params
   const since = req.nextUrl.searchParams.get('since')
   const poll  = req.nextUrl.searchParams.get('poll') === '1'
 
-  // REST poll mode: return missed messages as JSON and close
   if (poll) {
     const sinceTs = since ? parseInt(since) : 0
     const messages = sinceTs
@@ -113,14 +136,12 @@ export async function GET(
 
   const stream = new ReadableStream<string>({
     start(ctrl) {
-      // Send history first so the client catches up on reconnect
       const maxHistory = parseInt(process.env.NTFY_MAX_HISTORY ?? '100')
       const sinceTs    = since ? parseInt(since) : 0
       const history    = sinceTs
         ? messageDb.getSince(topic, sinceTs)
         : messageDb.getByTopic(topic, maxHistory)
 
-      // Send in chronological order
       ;[...history].reverse().forEach(msg => {
         ctrl.enqueue(`data: ${JSON.stringify(msg)}\n\n`)
       })
@@ -136,7 +157,7 @@ export async function GET(
       req.signal.addEventListener('abort', () => {
         clearInterval(keepalive)
         unsubscribe(topic, ctrl)
-        try { ctrl.close() } catch { /* already closed */ }
+        try { ctrl.close() } catch { }
       })
     },
   })
@@ -156,16 +177,38 @@ export async function POST(
   req: NextRequest,
   context: { params: Promise<{ topic: string }> }
 ) {
-  if (!isAuthorized(req)) return unauthorizedResponse()
+  if (!isAuthorized(req) && !checkTokenAuth(req)) return unauthorizedResponse()
 
   const { topic } = await context.params
-  let body: Partial<NotifyMessage> = {}
+  let body: any = {}
   const contentType = req.headers.get('content-type') ?? ''
+  let attachment: any = null
 
-  if (contentType.includes('application/json')) {
+  if (contentType.includes('multipart/form-data')) {
+    const form = await req.formData()
+    for (const [key, val] of form) {
+      if (key === 'file' && val instanceof Blob) {
+        const buf = Buffer.from(await val.arrayBuffer())
+        attachment = {
+          id: crypto.randomUUID(),
+          topic,
+          filename: (val as any).name || 'file',
+          mimetype: val.type || 'application/octet-stream',
+          size: buf.length,
+          data: buf,
+          timestamp: Date.now(),
+        }
+        attachmentDb.insert(attachment)
+        body.message = `📎 ${attachment.filename} (${formatSize(attachment.size)})`
+      } else if (key === 'message' && typeof val === 'string') {
+        body.message = val
+      } else if (typeof val === 'string') {
+        body[key] = val
+      }
+    }
+  } else if (contentType.includes('application/json')) {
     body = await req.json()
   } else {
-    // Support plain-text + ntfy-style headers
     const text = await req.text()
     body = {
       message:   text,
@@ -175,6 +218,8 @@ export async function POST(
       url:       req.headers.get('x-url')        ?? undefined,
       url_label: req.headers.get('x-url-label')  ?? undefined,
       tags:      req.headers.get('x-tags')?.split(',').map(t => t.trim()) ?? undefined,
+      actions:   req.headers.get('x-actions')    ?? undefined,
+      delay:     req.headers.get('x-delay')      ?? undefined,
     }
   }
 
@@ -182,10 +227,24 @@ export async function POST(
     return Response.json({ error: 'message is required' }, { status: 400 })
   }
 
-  // Resolve TTL → expires_at
   const defaultTtl = parseInt(process.env.NTFY_DEFAULT_TTL ?? '0')
   const ttl = body.ttl ?? defaultTtl
-  const expires_at = ttl > 0 ? Date.now() + ttl * 1000 : undefined
+  let expires_at = ttl > 0 ? Date.now() + ttl * 1000 : undefined
+
+  // Scheduling: delay=<seconds> or at=<ISO timestamp>
+  let publishAt = 0
+  if (body.delay) {
+    const match = body.delay.match(/^(\d+)([smhd])?$/)
+    if (match) {
+      const n = parseInt(match[1])
+      const unit = match[2] || 's'
+      const mult: Record<string, number> = { s: 1000, m: 60000, h: 3600000, d: 86400000 }
+      publishAt = Date.now() + n * mult[unit]
+    }
+  } else if (body.at) {
+    const ts = new Date(body.at).getTime()
+    if (!isNaN(ts)) publishAt = ts
+  }
 
   const msg: NotifyMessage = {
     id:        crypto.randomUUID(),
@@ -198,10 +257,24 @@ export async function POST(
     url:       body.url,
     url_label: body.url_label,
     expires_at,
+    actions:   body.actions ? JSON.parse(typeof body.actions === 'string' ? body.actions : JSON.stringify(body.actions)) : undefined,
+    attachment: attachment ? { id: attachment.id, filename: attachment.filename, mimetype: attachment.mimetype, size: attachment.size } : undefined,
     timestamp: Date.now(),
   }
 
-  // Persist to SQLite
+  // If scheduled, store in a scheduled queue (simple: store message now, publish later via setTimeout)
+  if (publishAt > 0) {
+    const delayMs = publishAt - Date.now()
+    if (delayMs > 0) {
+      messageDb.insert({ ...msg, tags: msg.tags ?? [], priority: msg.priority ?? 'default' })
+      setTimeout(async () => {
+        publish(topic, msg)
+        if (msg.actions) notifyWebPush(topic, msg)
+      }, delayMs)
+      return Response.json({ ok: true, id: msg.id, scheduled_at: new Date(publishAt).toISOString() })
+    }
+  }
+
   try {
     messageDb.insert({ ...msg, tags: msg.tags ?? [], priority: msg.priority ?? 'default' })
   } catch (err) {
@@ -211,38 +284,27 @@ export async function POST(
   const delivered = publish(topic, msg)
 
   const notifTitle = msg.title ? `[${topic}] ${msg.title}` : `[${topic}]`
-  try {
-    systemNotify(notifTitle, msg.message, msg.priority ?? 'default', msg.type, msg.url)
-  } catch (err) {
-    console.error('[notify] systemNotify error:', err)
-  }
+  try { systemNotify(notifTitle, msg.message, msg.priority ?? 'default', msg.type, msg.url) } catch {}
 
-  // Telegram — fire and forget
   sendTelegram(msg).catch(err => console.error('[telegram] error:', err))
-
-  // Web Push — send to all subscribers of this topic
   notifyWebPush(topic, msg).catch(err => console.error('[webpush] error:', err))
+  relayToNtfy(msg).catch(err => console.error('[relay] error:', err))
 
   return Response.json({ ok: true, id: msg.id, delivered })
 }
 
 // ─── DELETE /api/[topic]  →  delete message(s) ──────────────────────────────
-//   DELETE /api/[topic]?id=<uuid>      →  delete a single message
-//   DELETE /api/[topic]?id=a&id=b&id=c →  delete multiple messages
-//   DELETE /api/[topic]                →  delete all messages for topic
 export async function DELETE(
   req: NextRequest,
   context: { params: Promise<{ topic: string }> }
 ) {
-  if (!isAuthorized(req)) return unauthorizedResponse()
+  if (!isAuthorized(req) && !checkTokenAuth(req)) return unauthorizedResponse()
   const { topic } = await context.params
   const ids = req.nextUrl.searchParams.getAll('id')
 
   if (ids.length > 0) {
     let deleted = 0
-    for (const id of ids) {
-      deleted += messageDb.deleteMessage(id)
-    }
+    for (const id of ids) deleted += messageDb.deleteMessage(id)
     return Response.json({ ok: true, topic, deleted })
   }
 
@@ -265,4 +327,10 @@ export async function HEAD(
       'X-Last-Message':     String(stats.last_message ?? 0),
     },
   })
+}
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return bytes + 'B'
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + 'KB'
+  return (bytes / 1048576).toFixed(1) + 'MB'
 }

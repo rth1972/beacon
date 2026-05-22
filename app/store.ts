@@ -78,9 +78,17 @@ export interface NotifyMessage {
   type?: MessageType
   priority?: 'low' | 'default' | 'high' | 'urgent'
   tags?: string[]
-  url?: string         // click-action URL
-  url_label?: string   // button label, defaults to "Open"
-  expires_at?: number  // unix ms timestamp
-  ttl?: number         // seconds from now (alternative to expires_at)
+  url?: string
+  url_label?: string
+  expires_at?: number
+  ttl?: number
+  actions?: NotificationAction[]
+  attachment?: { id: string; filename: string; mimetype: string; size: number }
   timestamp: number
+}
+
+export interface NotificationAction {
+  action: 'view' | 'http'
+  label: string
+  url: string
 }

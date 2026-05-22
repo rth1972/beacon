@@ -18,6 +18,7 @@ interface Message {
   url_label?: string
   expires_at?: number
   timestamp: number
+  attachment?: { id: string; filename: string; mimetype: string; size: number }
 }
 
 const TYPE_META: Record<MessageType, { icon: string; label: string }> = {
@@ -63,6 +64,13 @@ export default function TopicPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushMsg, setPushMsg] = useState<string | null>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [detailMsg, setDetailMsg] = useState<Message | null>(null)
+  const [tokens, setTokens] = useState<any[]>([])
+  const [newTokenLabel, setNewTokenLabel] = useState('')
+  const [tokenMsg, setTokenMsg] = useState<string | null>(null)
+  const [showToken, setShowToken] = useState<string | null>(null)
+  const [settings, setSettings] = useState<any>(null)
   const pushSupported = typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window
   const lastTsRef = useRef<number>(0)
   const listRef = useRef<HTMLDivElement>(null)
@@ -337,6 +345,22 @@ export default function TopicPage() {
               </span>
             )}
             <button
+              onClick={() => setSettingsOpen(true)}
+              title="Topic settings"
+              style={{
+                background: 'none',
+                border: '1px solid var(--border)',
+                borderRadius: 6,
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                fontSize: 12,
+                padding: '4px 8px',
+                lineHeight: 1,
+              }}
+            >
+              ⚙
+            </button>
+            <button
               onClick={toggleMute}
               title={isMuted ? 'Unmute' : 'Mute notifications for this topic'}
               style={{
@@ -462,6 +486,9 @@ export default function TopicPage() {
             </button>
           ))}
 
+          {/* Copy curl */}
+          <CopyCurl topic={topic} />
+
           {/* Search */}
           <input
             placeholder="Search…"
@@ -547,6 +574,7 @@ export default function TopicPage() {
                 msg={msg}
                 selected={selectedIds.has(msg.id)}
                 onToggleSelect={() => toggleSelected(msg.id)}
+                onDetail={() => setDetailMsg(msg)}
                 onDelete={async () => {
                   setMessages(prev => prev.filter(m => m.id !== msg.id))
                   await fetch(`/api/${topic}?id=${msg.id}`, { method: 'DELETE' })
@@ -556,13 +584,32 @@ export default function TopicPage() {
           </div>
         )}
       </div>
+      {settingsOpen && (
+        <SettingsDrawer
+          topic={topic}
+          tokens={tokens}
+          setTokens={setTokens}
+          newTokenLabel={newTokenLabel}
+          setNewTokenLabel={setNewTokenLabel}
+          tokenMsg={tokenMsg}
+          setTokenMsg={setTokenMsg}
+          showToken={showToken}
+          setShowToken={setShowToken}
+          settings={settings}
+          setSettings={setSettings}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
+      {detailMsg && (
+        <DetailModal msg={detailMsg} onClose={() => setDetailMsg(null)} />
+      )}
     </AppShell>
   )
 }
 
 /* ─── Components ─── */
 
-function MessageCard({ msg, selected, onToggleSelect, onDelete }: { msg: Message; selected: boolean; onToggleSelect: () => void; onDelete: () => Promise<void> }) {
+function MessageCard({ msg, selected, onToggleSelect, onDelete, onDetail }: { msg: Message; selected: boolean; onToggleSelect: () => void; onDelete: () => Promise<void>; onDetail: () => void }) {
   const [copied, setCopied] = useState(false)
   const t      = msg.type
   const borderClr = t ? `var(--type-${t}-border)` : `var(--badge-${msg.priority}-fg)`
@@ -596,9 +643,12 @@ function MessageCard({ msg, selected, onToggleSelect, onDelete }: { msg: Message
       alignItems: 'flex-start',
       opacity: isExpired ? 0.5 : 1,
       transition: 'background 0.2s, border-color 0.2s',
-    }}>
+      cursor: 'pointer',
+    }}
+      onClick={onDetail}
+    >
       {/* Checkbox */}
-      <div style={{ paddingTop: 2 }}>
+      <div style={{ paddingTop: 2 }} onClick={e => e.stopPropagation()}>
         <input
           type="checkbox"
           checked={selected}
@@ -623,6 +673,12 @@ function MessageCard({ msg, selected, onToggleSelect, onDelete }: { msg: Message
             {msg.title && <div style={{ fontWeight: 600, marginBottom: 3, color: 'var(--text)' }}>{msg.title}</div>}
             <div style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.5 }}>{msg.message}</div>
 
+            {msg.attachment && (
+              <div style={{ marginTop: 6, fontSize: 11, color: 'var(--text-muted)' }}>
+                📎 {msg.attachment.filename} ({formatSize(msg.attachment.size)})
+              </div>
+            )}
+
             {msg.tags?.length > 0 && (
               <div style={{ marginTop: 6, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                 {msg.tags.map(tag => (
@@ -639,6 +695,7 @@ function MessageCard({ msg, selected, onToggleSelect, onDelete }: { msg: Message
                 href={msg.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -662,10 +719,12 @@ function MessageCard({ msg, selected, onToggleSelect, onDelete }: { msg: Message
                 ⏱ expires in {formatTtl(Math.floor(expiresIn / 1000))}
               </div>
             )}
+            <div style={{ marginTop: 4, fontSize: 10, color: 'var(--text-faint)', fontFamily: 'monospace' }}>
+              {msg.id.slice(0, 8)}…
+            </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
-            {/* Copy button */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
             <button
               onClick={copyMessage}
               title="Copy message text"
@@ -704,6 +763,7 @@ function MessageCard({ msg, selected, onToggleSelect, onDelete }: { msg: Message
     </div>
   )
 }
+
 
 function StatusDot({ status }: { status: 'connecting' | 'connected' | 'disconnected' }) {
   const colors = { connecting: '#888880', connected: '#2ecc71', disconnected: '#e74c3c' }
@@ -751,4 +811,210 @@ function sendBtnStyle(disabled: boolean): React.CSSProperties {
     transition: 'background 0.15s',
     whiteSpace: 'nowrap',
   }
+}
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return bytes + 'B'
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + 'KB'
+  return (bytes / 1048576).toFixed(1) + 'MB'
+}
+
+function CopyCurl({ topic }: { topic: string }) {
+  const [copied, setCopied] = useState(false)
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  const cmd = `curl -d "Hello World" ${origin}/api/${topic}`
+  async function copy() {
+    try { await navigator.clipboard.writeText(cmd); setCopied(true); setTimeout(() => setCopied(false), 1500) } catch {}
+  }
+  return (
+    <button
+      onClick={copy}
+      title="Copy publish curl command"
+      style={{
+        background: 'none',
+        border: '1px solid var(--border)',
+        borderRadius: 20,
+        color: copied ? '#2ecc71' : 'var(--text-muted)',
+        cursor: 'pointer',
+        fontSize: 11,
+        padding: '3px 12px',
+        transition: 'color 0.15s',
+        fontFamily: 'monospace',
+      }}
+    >
+      {copied ? '✓ Copied!' : 'curl ↗'}
+    </button>
+  )
+}
+
+function DetailModal({ msg, onClose }: { msg: Message; onClose: () => void }) {
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 200,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 24,
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-card)',
+          borderRadius: 12,
+          padding: 24,
+          maxWidth: 520,
+          width: '100%',
+          maxHeight: '80vh',
+          overflow: 'auto',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h3 style={{ fontSize: 16, color: 'var(--text)', margin: 0 }}>Message Detail</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-faint)', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>✕</button>
+        </div>
+        <pre style={{
+          background: 'var(--bg-code)',
+          border: '1px solid var(--border-code)',
+          borderRadius: 8,
+          padding: 16,
+          fontSize: 12,
+          lineHeight: 1.6,
+          overflow: 'auto',
+          color: 'var(--text-code)',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-all',
+          margin: 0,
+        }}>{JSON.stringify(msg, null, 2)}</pre>
+      </div>
+    </div>
+  )
+}
+
+function SettingsDrawer({ topic, tokens, setTokens, newTokenLabel, setNewTokenLabel, tokenMsg, setTokenMsg, showToken, setShowToken, settings, setSettings, onClose }: {
+  topic: string; tokens: any[]; setTokens: (t: any[]) => void;
+  newTokenLabel: string; setNewTokenLabel: (s: string) => void;
+  tokenMsg: string | null; setTokenMsg: (s: string | null) => void;
+  showToken: string | null; setShowToken: (s: string | null) => void;
+  settings: any; setSettings: (s: any) => void; onClose: () => void;
+}) {
+  const [retention, setRetention] = useState(settings?.retention ?? 0)
+  const [relayUrl, setRelayUrl] = useState(settings?.relay_url ?? '')
+  const [relayToken, setRelayToken] = useState(settings?.relay_token ?? '')
+
+  useEffect(() => {
+    fetch(`/api/tokens?topic=${encodeURIComponent(topic)}`).then(r => r.json()).then(d => setTokens(d.tokens ?? [])).catch(() => {})
+    fetch(`/api/settings/${encodeURIComponent(topic)}`).then(r => r.json()).then(d => { if (d.settings) { setSettings(d.settings); setRetention(d.settings.retention ?? 0); setRelayUrl(d.settings.relay_url ?? ''); setRelayToken(d.settings.relay_token ?? '') } }).catch(() => {})
+  }, [])
+
+  async function createToken() {
+    setTokenMsg(null)
+    try {
+      const res = await fetch('/api/tokens', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, label: newTokenLabel, permissions: 'write' }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setTokenMsg(data.error); return }
+      setShowToken(data.token)
+      setNewTokenLabel('')
+      const r = await fetch(`/api/tokens?topic=${encodeURIComponent(topic)}`)
+      const d = await r.json()
+      setTokens(d.tokens ?? [])
+    } catch { setTokenMsg('Failed to create token') }
+  }
+
+  async function revokeToken(id: string) {
+    await fetch(`/api/tokens?id=${id}`, { method: 'DELETE' })
+    setTokens(tokens.filter(t => t.id !== id))
+  }
+
+  async function saveSettings() {
+    await fetch(`/api/settings/${encodeURIComponent(topic)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ retention: parseInt(retention as any) || 0, relay_url: relayUrl || null, relay_token: relayToken || null }),
+    })
+  }
+
+  const inp: React.CSSProperties = {
+    background: 'var(--bg-input)', border: '1px solid var(--border-input)',
+    borderRadius: 6, color: 'var(--text)', fontSize: 13,
+    padding: '6px 10px', outline: 'none', width: '100%',
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', top: 0, right: 0, bottom: 0, width: 320, zIndex: 150,
+      background: 'var(--bg-sidebar)', borderLeft: '1px solid var(--border)',
+      display: 'flex', flexDirection: 'column',
+      boxShadow: '-4px 0 20px rgba(0,0,0,0.15)',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 16px 12px', borderBottom: '1px solid var(--border)' }}>
+        <h3 style={{ fontSize: 15, color: 'var(--text)', margin: 0 }}>⚙ Topic Settings</h3>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-faint)', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>✕</button>
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+        {/* Tokens */}
+        <div>
+          <div style={{ fontSize: 11, color: 'var(--text-label)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Access Tokens</div>
+          {tokens.length === 0 ? (
+            <div style={{ fontSize: 12, color: 'var(--text-faint)', marginBottom: 8 }}>No tokens yet</div>
+          ) : (
+            tokens.map(t => (
+              <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1, fontFamily: 'monospace' }}>
+                  {showToken && t.token === showToken?.slice(0, 8) + '…' ? showToken : t.token}
+                </span>
+                <span style={{ fontSize: 10, color: 'var(--text-faint)' }}>{t.label}</span>
+                <button onClick={() => revokeToken(t.id)} style={{ background: 'none', border: 'none', color: 'var(--type-error-icon-fg)', cursor: 'pointer', fontSize: 12, padding: '2px 4px' }}>✕</button>
+              </div>
+            ))
+          )}
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input placeholder="Label" value={newTokenLabel} onChange={e => setNewTokenLabel(e.target.value)} style={inp} />
+            <button onClick={createToken} disabled={!newTokenLabel.trim()} style={{
+              background: newTokenLabel.trim() ? 'var(--accent)' : 'var(--bg-btn-off)',
+              color: newTokenLabel.trim() ? '#fff' : 'var(--text-faint)',
+              border: 'none', borderRadius: 6, padding: '6px 12px', cursor: newTokenLabel.trim() ? 'pointer' : 'default',
+              fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+            }}>Generate</button>
+          </div>
+          {tokenMsg && <div style={{ marginTop: 6, fontSize: 11, color: 'var(--type-error-icon-fg)' }}>{tokenMsg}</div>}
+        </div>
+
+        {/* Retention */}
+        <div>
+          <div style={{ fontSize: 11, color: 'var(--text-label)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Retention</div>
+          <select value={retention} onChange={e => setRetention(parseInt(e.target.value))} style={inp}>
+            <option value={0}>Forever (default)</option>
+            <option value={3600}>1 hour</option>
+            <option value={86400}>1 day</option>
+            <option value={604800}>7 days</option>
+            <option value={2592000}>30 days</option>
+          </select>
+          <div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-faint)' }}>Messages older than this are auto-deleted.</div>
+        </div>
+
+        {/* ntfy.sh relay */}
+        <div>
+          <div style={{ fontSize: 11, color: 'var(--text-label)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>ntfy.sh Relay</div>
+          <input placeholder="Relay URL (e.g. https://ntfy.sh/{topic})" value={relayUrl} onChange={e => setRelayUrl(e.target.value)} style={inp} />
+          <input placeholder="Relay token (optional)" value={relayToken} onChange={e => setRelayToken(e.target.value)} style={{ ...inp, marginTop: 6 }} />
+          <div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-faint)' }}>Publishes are relayed to this URL. Use {'{topic}'} as placeholder.</div>
+        </div>
+
+        <button onClick={saveSettings} style={{
+          background: 'var(--accent)', color: '#fff', border: 'none',
+          borderRadius: 6, padding: '8px 16px', cursor: 'pointer',
+          fontWeight: 600, fontSize: 13,
+        }}>Save Settings</button>
+      </div>
+    </div>
+  )
 }

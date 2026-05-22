@@ -30,6 +30,37 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp);
   CREATE INDEX IF NOT EXISTS idx_messages_expires   ON messages(expires_at);
 
+  CREATE TABLE IF NOT EXISTS tokens (
+    id        TEXT PRIMARY KEY,
+    topic     TEXT NOT NULL,
+    label     TEXT NOT NULL DEFAULT '',
+    token     TEXT NOT NULL,
+    permissions TEXT NOT NULL DEFAULT 'write',
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_tokens_topic ON tokens(topic);
+
+  CREATE TABLE IF NOT EXISTS topic_settings (
+    topic       TEXT PRIMARY KEY,
+    retention   INTEGER NOT NULL DEFAULT 0,
+    relay_url   TEXT,
+    relay_token TEXT,
+    created_at  INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS attachments (
+    id          TEXT PRIMARY KEY,
+    topic       TEXT NOT NULL,
+    filename    TEXT NOT NULL,
+    mimetype    TEXT NOT NULL DEFAULT 'application/octet-stream',
+    size        INTEGER NOT NULL,
+    data        BLOB NOT NULL,
+    timestamp   INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_attachments_topic ON attachments(topic);
+
   CREATE TABLE IF NOT EXISTS subscriptions (
     id        TEXT PRIMARY KEY,
     topic     TEXT NOT NULL,
@@ -186,7 +217,72 @@ export const subDb = {
   },
 }
 
-// Purge expired messages every 10 minutes
+export interface Token {
+  id: string
+  topic: string
+  label: string
+  token: string
+  permissions: string
+  created_at: number
+}
+
+const insertTokenStmt = db.prepare(`
+  INSERT INTO tokens (id, topic, label, token, permissions, created_at)
+  VALUES (@id, @topic, @label, @token, @permissions, @created_at)
+`)
+const deleteTokenStmt = db.prepare('DELETE FROM tokens WHERE id = ?')
+const getTokensByTopicStmt = db.prepare('SELECT * FROM tokens WHERE topic = ? ORDER BY created_at ASC')
+const getTokenByValueStmt = db.prepare('SELECT * FROM tokens WHERE token = ?')
+
+export const tokenDb = {
+  create(t: Token) { insertTokenStmt.run(t) },
+  revoke(id: string) { return deleteTokenStmt.run(id).changes },
+  getByTopic(topic: string): Token[] { return getTokensByTopicStmt.all(topic) as Token[] },
+  findByToken(token: string): Token | undefined { return getTokenByValueStmt.get(token) as Token | undefined },
+}
+
+export interface TopicSettings {
+  topic: string
+  retention: number
+  relay_url: string | null
+  relay_token: string | null
+  created_at: number
+}
+
+const upsertSettingsStmt = db.prepare(`
+  INSERT OR REPLACE INTO topic_settings (topic, retention, relay_url, relay_token, created_at)
+  VALUES (@topic, @retention, @relay_url, @relay_token, @created_at)
+`)
+const getSettingsStmt = db.prepare('SELECT * FROM topic_settings WHERE topic = ?')
+
+export const settingsDb = {
+  upsert(s: TopicSettings) { upsertSettingsStmt.run(s) },
+  get(topic: string): TopicSettings | undefined { return getSettingsStmt.get(topic) as TopicSettings | undefined },
+}
+
+export interface Attachment {
+  id: string
+  topic: string
+  filename: string
+  mimetype: string
+  size: number
+  timestamp: number
+}
+
+const insertAttachmentStmt = db.prepare(`
+  INSERT INTO attachments (id, topic, filename, mimetype, size, data, timestamp)
+  VALUES (@id, @topic, @filename, @mimetype, @size, @data, @timestamp)
+`)
+const getAttachmentsByTopicStmt = db.prepare(
+  'SELECT id, topic, filename, mimetype, size, timestamp FROM attachments WHERE topic = ? ORDER BY timestamp DESC'
+)
+const getAttachmentStmt = db.prepare('SELECT * FROM attachments WHERE id = ?')
+
+export const attachmentDb = {
+  insert(a: any) { insertAttachmentStmt.run(a) },
+  getByTopic(topic: string): Attachment[] { return getAttachmentsByTopicStmt.all(topic) as Attachment[] },
+  get(id: string): any { return getAttachmentStmt.get(id) },
+}
 setInterval(() => {
   const deleted = messageDb.purgeExpired()
   if (deleted > 0) console.log(`[db] purged ${deleted} expired messages`)

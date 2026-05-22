@@ -28,13 +28,13 @@ const darkTheme: Theme = {
 }
 
 const lightTheme: Theme = {
-  bg: '#e5e5e0', gray: '#c8c8c2', card: '#d4d4ce',
+  bg: '#ffffff', gray: '#f5f5f5', card: '#f7f7f7',
   gold: '#5a5a50', goldLight: '#4a4a40', goldDark: '#3a3a30', orange: '#888880',
-  text: '#2a2a2a', textMuted: '#6a6a6a', border: '#b8b8b2', track: '#c0c0ba',
+  text: '#2a2a2a', textMuted: '#6a6a6a', border: '#e0e0e0', track: '#e8e8e8',
   grad1: '#6a6a60', grad2: '#505050', heading: '#1a1a1a',
   heroBg: 'url(/hero-bg-light.svg)',
   heroOverlay: [
-    `linear-gradient(#e5e5e0E0, #e5e5e0)`,
+    `linear-gradient(#ffffffE0, #ffffff)`,
     `radial-gradient(ellipse at 50% 0%, #5a5a5008 0%, transparent 0%)`,
     `radial-gradient(ellipse at 20% 80%, #4a4a4006 0%, transparent 0%)`,
     `radial-gradient(ellipse at 80% 60%, #6a6a6006 0%, transparent 0%)`,
