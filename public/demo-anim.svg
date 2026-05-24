@@ -25,11 +25,10 @@
   </defs>
 
   <!-- Container -->
-  <rect width="480" height="660" rx="16" fill="#19171c"/>
-  <rect x="2" y="2" width="476" height="656" rx="14" fill="none" stroke="#505050" stroke-width="1" opacity=".35"/>
+  <rect width="480" height="660" rx="16" fill="transparent"/>
 
   <!-- Phone -->
-  <rect x="80" y="30" width="320" height="590" rx="36" fill="#111" stroke="url(#gg)" stroke-width="2.5"/>
+  <rect x="80" y="30" width="320" height="590" rx="36" fill="#111"/>
   <rect x="96" y="56" width="288" height="545" rx="10" fill="#1a1a1a"/>
   <rect x="100" y="60" width="280" height="540" rx="6" fill="#0f0f0f"/>
   <circle cx="240" cy="46" r="5" fill="url(#gg)" opacity=".35"/>

@@ -1,0 +1,29 @@
+services:
+  beacon:
+    build: .
+    container_name: beacon
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - beacon-data:/app/data
+    environment:
+      - NODE_ENV=production
+      # Copy these from your .env.local
+      - NTFY_TOKEN=${NTFY_TOKEN:-}
+      - NTFY_MAX_HISTORY=${NTFY_MAX_HISTORY:-100}
+      - NTFY_DEFAULT_TTL=${NTFY_DEFAULT_TTL:-0}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+      # Webhook secret (optional)
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  beacon-data:
+    driver: local

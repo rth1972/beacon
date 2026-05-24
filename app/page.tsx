@@ -1,561 +1,353 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 
-/* ── Themes ── */
-type Theme = {
-  bg: string; gray: string; card: string;
-  gold: string; goldLight: string; goldDark: string; orange: string;
-  text: string; textMuted: string; border: string; track: string;
-  grad1: string; grad2: string; heading: string;
-  heroBg: string; heroOverlay: string; demoAnim: string;
-}
-
-const darkTheme: Theme = {
-  bg: '#19171c', gray: '#353535', card: '#242424',
-  gold: '#f3ba40', goldLight: '#f9c25b', goldDark: '#d49e1a', orange: '#fe6f41',
-  text: '#cccccc', textMuted: '#bebebe', border: '#505050', track: '#5e5e5e',
-  grad1: '#f4d157', grad2: '#ea9322', heading: '#ffffff',
-  heroBg: 'url(/hero-bg.svg)',
-  heroOverlay: [
-    `linear-gradient(#19171cD0, #19171c)`,
-    `radial-gradient(ellipse at 50% 0%, #f3ba4015 0%, transparent 0%)`,
-    `radial-gradient(ellipse at 20% 80%, #ea93220C 0%, transparent 0%)`,
-    `radial-gradient(ellipse at 80% 60%, #f4d1570A 0%, transparent 0%)`,
-  ].join(', '),
-  demoAnim: '/demo-anim.svg',
-}
-
-const lightTheme: Theme = {
-  bg: '#ffffff', gray: '#f5f5f5', card: '#f7f7f7',
-  gold: '#5a5a50', goldLight: '#4a4a40', goldDark: '#3a3a30', orange: '#888880',
-  text: '#2a2a2a', textMuted: '#6a6a6a', border: '#e0e0e0', track: '#e8e8e8',
-  grad1: '#6a6a60', grad2: '#505050', heading: '#1a1a1a',
-  heroBg: 'url(/hero-bg-light.svg)',
-  heroOverlay: [
-    `linear-gradient(#ffffffE0, #ffffff)`,
-    `radial-gradient(ellipse at 50% 0%, #5a5a5008 0%, transparent 0%)`,
-    `radial-gradient(ellipse at 20% 80%, #4a4a4006 0%, transparent 0%)`,
-    `radial-gradient(ellipse at 80% 60%, #6a6a6006 0%, transparent 0%)`,
-  ].join(', '),
-  demoAnim: '/demo-anim-light.svg',
-}
-
 export default function LandingPage() {
-  const [scrolled, setScrolled] = useState(false)
-  const [showTopBtn, setShowTopBtn] = useState(false)
-  const [lightMode, setLightMode] = useState(true)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const C: Theme = lightMode ? lightTheme : darkTheme
-  const s = buildStyles(C)
+  const codeTabsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY
-      setScrolled(y > 50)
-      setShowTopBtn(y > 300)
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    onScroll()
-    return () => window.removeEventListener('scroll', onScroll)
+    const observer = new IntersectionObserver(
+      entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible') }),
+      { threshold: 0.1 }
+    )
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el))
+    return () => observer.disconnect()
   }, [])
 
-  const toggleTheme = () => setLightMode(p => !p)
+  function switchTab(lang: string, el: HTMLElement) {
+    codeTabsRef.current?.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'))
+    codeTabsRef.current?.querySelectorAll('.code-pane').forEach(p => p.classList.remove('active'))
+    el.classList.add('active')
+    codeTabsRef.current?.querySelector(`#pane-${lang}`)?.classList.add('active')
+  }
 
   return (
-    <div style={{ ...s.page, background: C.bg, color: C.text }}>
-
+    <>
       <style>{`
-        @media (max-width: 768px) {
-          [data-bn-desktop] { display: none !important; }
-          [data-bn-hamburger] { display: flex !important; }
-          [data-bn-inner] { padding: 0 16px !important; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+        :root {
+          --bg:#080c14;--bg2:#0d1320;--bg3:#111828;
+          --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+          --accent:#3d6bff;--accent2:#6490ff;
+          --text:#e8ecf4;--muted:#7a8299;--faint:#3d4560;
+          --success:#2ecc71;--warning:#f5a623;--error:#ff5f5f;--info:#6490ff;
+          --mono:'DM Mono',monospace;--serif:'Instrument Serif',Georgia,serif;
+          --sans:'DM Sans',system-ui,sans-serif;
         }
-        @media (min-width: 769px) {
-          [data-bn-hamburger] { display: none !important; }
-          [data-bn-overlay] { display: none !important; }
-        }
+        .landing{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+        .landing a{color:inherit;text-decoration:none}
+        .landing::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:32px 32px;pointer-events:none;z-index:0}
+        .l-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:60px;background:rgba(8,12,20,0.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+        .l-nav-logo{display:flex;align-items:center;gap:10px;font-weight:500;font-size:17px;letter-spacing:-0.3px}
+        .l-nav-links{display:flex;align-items:center;gap:24px;font-size:14px;color:var(--muted)}
+        .l-nav-links a:hover{color:var(--text)}
+        .l-btn-primary{background:var(--accent);color:#fff;font-weight:500;border-radius:7px;transition:background 0.15s,transform 0.1s}
+        .l-btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
+        .l-btn-ghost{color:var(--muted);border:1px solid var(--border2);border-radius:7px;font-family:var(--mono);transition:color 0.15s,border-color 0.15s}
+        .l-btn-ghost:hover{color:var(--text);border-color:var(--faint)}
+        .l-hero{position:relative;z-index:1;min-height:88vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 24px 60px}
+        .l-badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--accent2);background:rgba(61,107,255,0.1);border:1px solid rgba(61,107,255,0.25);border-radius:20px;padding:4px 14px;margin-bottom:32px;letter-spacing:0.5px;text-transform:uppercase}
+        .l-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--success);animation:bpulse 2s infinite}
+        @keyframes bpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+        .l-h1{font-family:var(--serif);font-size:clamp(44px,7vw,80px);font-weight:400;line-height:1.05;letter-spacing:-1px;margin-bottom:24px;max-width:800px}
+        .l-h1 em{font-style:italic;color:var(--accent2)}
+        .l-lead{font-size:clamp(16px,2vw,19px);color:var(--muted);max-width:520px;margin-bottom:44px;font-weight:300;line-height:1.7}
+        .l-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:64px}
+        .arc{stroke:var(--accent);fill:none;stroke-linecap:round}
+        .arc-1{animation:arc-in 0.6s 0.1s both}
+        .arc-2{animation:arc-in 0.6s 0.3s both}
+        .arc-3{animation:arc-in 0.6s 0.5s both}
+        @keyframes arc-in{from{opacity:0;stroke-dashoffset:200}to{opacity:1;stroke-dashoffset:0}}
+        .code-strip{width:100%;max-width:680px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;text-align:left}
+        .code-tab-bar{display:flex;align-items:center;gap:6px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg3)}
+        .code-dot{width:10px;height:10px;border-radius:50%}
+        .code-tabs{display:flex;gap:4px;margin-left:10px}
+        .code-tab{font-family:var(--mono);font-size:11px;color:var(--muted);padding:3px 10px;border-radius:4px;cursor:pointer;border:none;background:none;transition:background 0.15s,color 0.15s}
+        .code-tab.active{background:rgba(61,107,255,0.15);color:var(--accent2)}
+        .code-body{padding:20px;font-family:var(--mono);font-size:13px;line-height:1.7;overflow-x:auto}
+        .code-pane{display:none}.code-pane.active{display:block}
+        .tok-k{color:#bb86fc}.tok-s{color:#98d4a3}.tok-n{color:#6490ff}.tok-c{color:var(--muted);font-style:italic}.tok-kw{color:#f08fa0}.tok-f{color:#ffca80}
+        .l-stats{position:relative;z-index:1;display:flex;justify-content:center;gap:48px;padding:48px 24px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);flex-wrap:wrap}
+        .stat-num{font-family:var(--serif);font-size:36px;font-weight:400;letter-spacing:-1px}
+        .stat-label{font-size:13px;color:var(--muted);margin-top:2px;text-align:center}
+        .l-section{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:96px 24px}
+        .l-section-label{font-family:var(--mono);font-size:11px;color:var(--accent2);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px}
+        .l-section-title{font-family:var(--serif);font-size:clamp(30px,4vw,46px);font-weight:400;line-height:1.1;letter-spacing:-0.5px;margin-bottom:56px;max-width:500px}
+        .l-section-title em{font-style:italic;color:var(--accent2)}
+        .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+        .feature-card{background:var(--bg);padding:28px;transition:background 0.2s}
+        .feature-card:hover{background:var(--bg2)}
+        .feature-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:17px}
+        .feature-card h3{font-size:15px;font-weight:500;margin-bottom:6px;letter-spacing:-0.2px}
+        .feature-card p{font-size:13px;color:var(--muted);line-height:1.65}
+        .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
+        .step{padding:28px;background:var(--bg2);border:1px solid var(--border);border-radius:12px}
+        .step-num{font-family:var(--mono);font-size:10px;color:var(--faint);margin-bottom:12px;letter-spacing:1px}
+        .step h3{font-size:16px;font-weight:500;margin-bottom:8px;letter-spacing:-0.2px}
+        .step p{font-size:13px;color:var(--muted);line-height:1.65}
+        .step-code{margin-top:14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:10px 12px;font-family:var(--mono);font-size:11px;color:var(--muted);overflow-x:auto}
+        .notif-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:48px}
+        .notif-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px}
+        .notif-card-hdr{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:14px;letter-spacing:1px;text-transform:uppercase}
+        .notif-bubble{display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:9px;margin-bottom:8px;border-left:3px solid transparent}
+        .notif-bubble.success{background:rgba(46,204,113,0.07);border-left-color:var(--success)}
+        .notif-bubble.error{background:rgba(255,95,95,0.07);border-left-color:var(--error)}
+        .notif-bubble.warning{background:rgba(245,166,35,0.07);border-left-color:var(--warning)}
+        .notif-bubble.info{background:rgba(100,144,255,0.07);border-left-color:var(--info)}
+        .notif-icon{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+        .notif-icon.success{background:rgba(46,204,113,0.15)}.notif-icon.error{background:rgba(255,95,95,0.15)}
+        .notif-icon.warning{background:rgba(245,166,35,0.15)}.notif-icon.info{background:rgba(100,144,255,0.15)}
+        .notif-title{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px}
+        .notif-msg{font-size:11px;color:var(--muted)}
+        .notif-meta{font-size:10px;color:var(--faint);margin-top:3px;font-family:var(--mono)}
+        .notif-url-btn{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-size:10px;font-weight:500;color:var(--accent2);background:rgba(61,107,255,0.12);border-radius:4px;padding:2px 7px}
+        .l-cta{position:relative;z-index:1;text-align:center;padding:96px 24px;border-top:1px solid var(--border)}
+        .l-cta h2{font-family:var(--serif);font-size:clamp(32px,5vw,56px);font-weight:400;letter-spacing:-0.5px;margin-bottom:16px;line-height:1.1}
+        .l-cta h2 em{font-style:italic;color:var(--accent2)}
+        .l-cta p{color:var(--muted);font-size:16px;margin-bottom:36px}
+        .l-footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:24px 48px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--faint)}
+        .fade-up{opacity:0;transform:translateY(24px);transition:opacity 0.6s ease,transform 0.6s ease}
+        .fade-up.visible{opacity:1;transform:none}
+        .stagger-1{transition-delay:0.1s}.stagger-2{transition-delay:0.2s}.stagger-3{transition-delay:0.3s}
+        @media(max-width:700px){.steps,.notif-grid{grid-template-columns:1fr}.l-nav{padding:0 20px}.l-nav-links{display:none}}
       `}</style>
 
-      {/* Nav */}
-      <nav style={{ ...s.nav, ...(scrolled ? s.navSolid : s.navTop) }}>
-        <div data-bn-inner style={s.navInner}>
-          <a href="/" onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }} style={s.navLogo}>
-            <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
-              <rect x="6" y="2" width="36" height="44" rx="6" stroke={C.gold} strokeWidth="2"/>
-              <rect x="10" y="8" width="28" height="34" rx="2" stroke={C.gold} strokeWidth="0.5" opacity="0.35"/>
-              <circle cx="24" cy="4" r="1.5" stroke={C.gold} strokeWidth="1"/>
-              <rect x="18" y="42" width="12" height="1.5" rx="0.75" stroke={C.gold} strokeWidth="1" opacity="0.6"/>
-              <rect x="14" y="16" width="20" height="18" rx="3" fill={C.bg} stroke={C.gold} strokeWidth="0.8"/>
-              <rect x="17" y="18" width="5" height="5" rx="1.5" stroke={C.gold} strokeWidth="0.6"/>
-              <path d="M19.5,20.5c-0.5,0-1,0.3-1,0.8v0.6l-0.5,0.5c-0.2,0.2-0.1,0.4,0,0.5c0.7,0.3,1.4,0.5,2.2,0.5s1.5-0.2,2.2-0.5c0.2-0.1,0.2-0.3,0-0.5l-0.5-0.5v-0.6c0-0.5-0.5-0.8-1-0.8z" stroke={C.gold} strokeWidth="0.4"/>
-              <circle cx="38" cy="12" r="3.5" fill="#cc2200"/>
-              <text x="38" y="13.5" textAnchor="middle" fontFamily="sans-serif" fontSize="5" fontWeight="bold" fill="#fff">!</text>
-            </svg>
-            <span style={{ fontSize: 17, fontWeight: 600, color: C.text, letterSpacing: '-0.3px' }}>Beacon</span>
-          </a>
+      <div className="landing">
+        {/* Nav */}
+        <nav className="l-nav">
+          <div className="l-nav-logo">
+            <BeaconIcon size={22}/>
+            Beacon
+          </div>
+          <div className="l-nav-links">
+            <a href="#features">Features</a>
+            <a href="#how">How it works</a>
+            <a href="#notifications">Notifications</a>
+            <Link href="/docs" style={{ color: 'var(--muted)' }}>API docs</Link>
+            <Link href="/dashboard" className="l-btn-primary" style={{ padding: '7px 18px', fontSize: 13 }}>Open app →</Link>
+          </div>
+        </nav>
 
-          {/* Desktop links */}
-          <div data-bn-desktop style={s.navLinks}>
-            <a href="#features" style={s.navLink}>Features</a>
-            <a href="#setup" style={s.navLink}>Setup</a>
-            <button onClick={toggleTheme} style={s.themeToggle} aria-label="Toggle theme">
-              {lightMode ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                </svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="5"/>
-                  <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                  <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                </svg>
-              )}
-            </button>
-            <Link href="/dashboard" style={s.navCta}>Dashboard</Link>
+        {/* Hero */}
+        <section className="l-hero">
+          <svg width="88" height="88" viewBox="0 0 96 96" fill="none" style={{ marginBottom: 36 }}>
+            <circle cx="48" cy="72" r="44" className="arc arc-1" strokeWidth="2" strokeDasharray="100 999" strokeDashoffset="-38"/>
+            <circle cx="48" cy="72" r="30" className="arc arc-2" strokeWidth="2.5" strokeDasharray="68 999" strokeDashoffset="-26"/>
+            <circle cx="48" cy="72" r="16" className="arc arc-3" strokeWidth="3" strokeDasharray="36 999" strokeDashoffset="-14"/>
+            <rect x="44" y="28" width="8" height="36" rx="3" fill="#3d6bff"/>
+            <polygon points="30,64 66,64 58,80 38,80" fill="#3d6bff" opacity="0.6"/>
+            <rect x="34" y="79" width="28" height="4" rx="2" fill="#3d6bff" opacity="0.4"/>
+            <circle cx="48" cy="24" r="5" fill="#6490ff"/>
+            <circle cx="48" cy="24" r="9" stroke="#6490ff" strokeWidth="1.5" opacity="0.4" style={{ animation: 'bpulse 2s infinite' }}/>
+          </svg>
+
+          <div className="l-badge">Self-hosted · Zero cloud · Your data</div>
+          <h1 className="l-h1">Push notifications,<br/><em>on your terms</em></h1>
+          <p className="l-lead">Beacon is a lightweight, self-hosted notification server. Send alerts from scripts, servers, and pipelines — to your browser, phone, desktop, or Telegram.</p>
+
+          <div className="l-actions">
+            <Link href="/dashboard" className="l-btn-primary" style={{ padding: '12px 28px', fontSize: 15 }}>Open dashboard →</Link>
+            <a href="#how" className="l-btn-ghost" style={{ padding: '12px 24px', fontSize: 13 }}>$ npm run dev</a>
           </div>
 
-          {/* Hamburger */}
-          <button data-bn-hamburger onClick={() => setMenuOpen(true)} style={s.hamburger} aria-label="Open menu">
-            <span style={s.hamburgerLine} /><span style={s.hamburgerLine} /><span style={s.hamburgerLine} />
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile overlay */}
-      {menuOpen && (
-        <div data-bn-overlay style={s.mobileOverlay} onClick={() => setMenuOpen(false)}>
-          <div style={s.mobilePanel} onClick={e => e.stopPropagation()}>
-            <div style={s.mobileHeader}>
-              <a href="/" onClick={e => { e.preventDefault(); setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }} style={{ fontSize: 17, fontWeight: 600, color: C.heading, textDecoration: 'none' }}>Beacon</a>
-              <button onClick={() => setMenuOpen(false)} style={s.mobileClose} aria-label="Close menu">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.text} strokeWidth="2" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
+          {/* Code strip */}
+          <div className="code-strip fade-up" ref={codeTabsRef}>
+            <div className="code-tab-bar">
+              <div className="code-dot" style={{ background: '#ff5f57' }}/>
+              <div className="code-dot" style={{ background: '#ffbd2e' }}/>
+              <div className="code-dot" style={{ background: '#28c940' }}/>
+              <div className="code-tabs">
+                <button className="code-tab active" onClick={e => switchTab('curl', e.currentTarget)}>curl</button>
+                <button className="code-tab" onClick={e => switchTab('js', e.currentTarget)}>javascript</button>
+                <button className="code-tab" onClick={e => switchTab('python', e.currentTarget)}>python</button>
+                <button className="code-tab" onClick={e => switchTab('schedule', e.currentTarget)}>schedule</button>
+              </div>
             </div>
-            <div style={s.mobileBody}>
-              <a href="#features" style={s.mobileLink} onClick={() => setMenuOpen(false)}>Features</a>
-              <a href="#setup" style={s.mobileLink} onClick={() => setMenuOpen(false)}>Setup</a>
-              <div style={{ height: 1, background: C.border, opacity: 0.3, margin: '12px 0' }} />
-              <Link href="/dashboard" style={s.mobileCta} onClick={() => setMenuOpen(false)}>Dashboard</Link>
-              <button onClick={() => { toggleTheme(); setMenuOpen(false) }} style={s.mobileThemeBtn}>
-                {lightMode ? (
-                  <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark mode</>
-                ) : (
-                  <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Light mode</>
-                )}
-              </button>
+            <div className="code-body">
+              <div className="code-pane active" id="pane-curl">
+                <span className="tok-c"># Publish a notification</span>{'\n'}
+                <span className="tok-n">curl</span> <span className="tok-kw">-X POST</span> http://localhost:3000/api/deploy \{'\n'}
+                {'  '}<span className="tok-kw">-H</span> <span className="tok-s">"Content-Type: application/json"</span> \{'\n'}
+                {'  '}<span className="tok-kw">-d</span> <span className="tok-s">{'\'{"title":"Deploy complete","message":"v2.4.1","type":"success","priority":"high","ttl":3600}\''}</span>
+              </div>
+              <div className="code-pane" id="pane-js">
+                <span className="tok-c">{'// Subscribe to a topic'}</span>{'\n'}
+                <span className="tok-kw">const</span> <span className="tok-n">es</span> = <span className="tok-kw">new</span> <span className="tok-f">EventSource</span>(<span className="tok-s">'/api/deploy'</span>){'\n\n'}
+                <span className="tok-n">es</span>.<span className="tok-n">onmessage</span> = (<span className="tok-n">e</span>) {'=> {'}{'\n'}
+                {'  '}<span className="tok-kw">const</span> <span className="tok-n">msg</span> = <span className="tok-n">JSON</span>.<span className="tok-f">parse</span>(<span className="tok-n">e</span>.<span className="tok-n">data</span>){'\n'}
+                {'  '}console.<span className="tok-f">log</span>(<span className="tok-s">{"`[${msg.topic}] ${msg.message}`"}</span>){'\n'}
+                {'}'}
+              </div>
+              <div className="code-pane" id="pane-python">
+                <span className="tok-c"># Publish from Python</span>{'\n'}
+                <span className="tok-kw">import</span> <span className="tok-n">requests</span>{'\n\n'}
+                <span className="tok-n">requests</span>.<span className="tok-f">post</span>(<span className="tok-s">"http://localhost:3000/api/alerts"</span>, <span className="tok-n">json</span>={'={'}{'{'}{'{'}{'\n'}
+                {'    '}<span className="tok-s">"message"</span>: <span className="tok-s">"Disk usage at 92%"</span>,{'\n'}
+                {'    '}<span className="tok-s">"type"</span>:    <span className="tok-s">"warning"</span>,{'\n'}
+                {'    '}<span className="tok-s">"priority"</span>: <span className="tok-s">"urgent"</span>,{'\n'}
+                {'    '}<span className="tok-s">"tags"</span>:    [<span className="tok-s">"infra"</span>, <span className="tok-s">"prod"</span>],{'\n'}
+                {'}'}{'}'}{'}'}){'\n'}
+              </div>
+              <div className="code-pane" id="pane-schedule">
+                <span className="tok-c"># Schedule a message to send in 30 minutes</span>{'\n'}
+                <span className="tok-n">curl</span> <span className="tok-kw">-X POST</span> http://localhost:3000/api/maintenance \{'\n'}
+                {'  '}<span className="tok-kw">-H</span> <span className="tok-s">"Content-Type: application/json"</span> \{'\n'}
+                {'  '}<span className="tok-kw">-d</span> <span className="tok-s">{'\'{"message":"Maintenance starting","delay":"30m","type":"warning"}\''}</span>{'\n\n'}
+                <span className="tok-c"># Check pending scheduled messages</span>{'\n'}
+                <span className="tok-n">curl</span> http://localhost:3000/api/scheduled
+              </div>
             </div>
           </div>
+        </section>
+
+        {/* Stats */}
+        <div className="l-stats">
+          {[
+            { num: '0',    label: 'dependencies for notifications' },
+            { num: '3',    label: 'platforms — mac, windows, linux' },
+            { num: '<1s',  label: 'message delivery latency' },
+            { num: '∞',    label: 'topics, no limits' },
+          ].map(({ num, label }, i) => (
+            <div key={label} className={`fade-up ${i > 0 ? `stagger-${Math.min(i, 3)}` : ''}`} style={{ textAlign: 'center' }}>
+              <div className="stat-num">{num}</div>
+              <div className="stat-label">{label}</div>
+            </div>
+          ))}
         </div>
-      )}
 
-      {/* ── Hero ── */}
-      <section style={{ ...s.hero, backgroundImage: C.heroBg }}>
-        <div style={{ ...s.heroOverlay, background: C.heroOverlay }} />
-        <div style={s.heroInner}>
-          <div style={s.heroBadge}>
-            <span style={s.badgeDot} />
-            SELF-HOSTED · OPEN SOURCE · PWA PUSH
-          </div>
-          <h1 style={s.heroTitle}>
-            PUSH NOTIFICATION<br />
-            <span style={s.heroAccent}>SERVER</span>
-          </h1>
-          <p style={s.heroDesc}>
-            Lightweight, self-hosted notifications. Subscribe via SSE, publish with curl.
-            No cloud, no dependencies, no complexity.
-          </p>
-
-          <div style={s.heroCtas}>
-            <Link href="/dashboard" style={s.btnPrimary}>OPEN DASHBOARD →</Link>
-            <a href="#setup" style={s.btnSecondary}>npm run dev</a>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Features ── */}
-      <section id="features" style={s.section}>
-        <div style={s.sectionInner}>
-          <div style={s.sectionLabel}>CORE FEATURES</div>
-          <h2 style={s.sectionTitle}>
-            Main Facts<br />
-            <span style={s.titleAccent}>About Beacon</span>
-          </h2>
-          <div style={s.featureGrid}>
+        {/* Features */}
+        <section className="l-section" id="features">
+          <div className="l-section-label">Features</div>
+          <h2 className="l-section-title">Everything you need,<br/><em>nothing you don't</em></h2>
+          <div className="feature-grid">
             {[
-              { icon: '📡', title: 'REAL-TIME SSE', desc: 'Server-Sent Events deliver messages the moment they arrive. No polling, no WebSocket overhead.' },
-              { icon: '📱', title: 'WEB PUSH', desc: 'Get push notifications on your phone via PWA. Works on Android Chrome and iOS Safari — no app store needed.' },
-              { icon: '🗄️', title: 'PERSISTENT HISTORY', desc: 'SQLite-backed storage means you never miss a message. Reconnect and replay what you missed.' },
-              { icon: '🔐', title: 'TOKEN AUTH', desc: 'Secure your server with a single environment variable. Browser login page + Bearer token for scripts.' },
-              { icon: '✈️', title: 'TELEGRAM RELAY', desc: 'Forward every message to a Telegram bot. Get notified anywhere when you are away from your desk.' },
-              { icon: '⏱️', title: 'TTL & AUTO-CLEANUP', desc: 'Set an expiry on any message. Expired entries are hidden from queries and purged every 10 minutes.' },
-            ].map((f, i) => (
-              <div key={i} style={s.featureCard}>
-                <div style={{ ...s.featureIcon, background: `${C.gold}15` }}>{f.icon}</div>
-                <h3 style={s.featureTitle}>{f.title}</h3>
-                <p style={s.featureDesc}>{f.desc}</p>
+              { icon: '📡', bg: 'rgba(61,107,255,0.12)',  title: 'Real-time SSE',             desc: 'Messages delivered instantly. History replayed on reconnect — never miss a notification.' },
+              { icon: '🗄️', bg: 'rgba(46,204,113,0.12)',  title: 'Persistent history',        desc: 'SQLite-backed store. Survives restarts. Full-text search across all topics.' },
+              { icon: '🔗', bg: 'rgba(100,144,255,0.12)', title: 'Outgoing webhooks',          desc: 'POST to Slack, Discord, or any URL on every message. HMAC signing included.' },
+              { icon: '⏰', bg: 'rgba(245,166,35,0.12)',  title: 'Scheduled messages',         desc: 'Delay delivery with "delay=5m". Schedule maintenance windows, reminders, and more.' },
+              { icon: '⏱️', bg: 'rgba(46,204,113,0.12)',  title: 'Message expiry',             desc: 'TTL per message. Expired messages are hidden and auto-purged every 10 minutes.' },
+              { icon: '🔐', bg: 'rgba(245,166,35,0.12)',  title: 'Token auth',                 desc: 'Single env var protects all endpoints. Browser login page, Authorization header for scripts.' },
+              { icon: '🛡️', bg: 'rgba(255,95,95,0.12)',   title: 'Rate limiting',              desc: 'Configurable per-topic message rate. Prevents runaway scripts from flooding your inbox.' },
+              { icon: '🖥️', bg: 'rgba(255,95,95,0.12)',   title: 'Native OS notifications',   desc: 'osascript on macOS, PowerShell on Windows, notify-send on Linux. Zero installs.' },
+              { icon: '✈️', bg: 'rgba(100,144,255,0.12)', title: 'Telegram relay',             desc: 'Forward every notification to your phone via a Telegram bot. Works from anywhere.' },
+              { icon: '📋', bg: 'rgba(61,107,255,0.12)',  title: 'Message templates',          desc: 'Save and reuse common messages. One click to fill the send form from a template.' },
+              { icon: '🔍', bg: 'rgba(46,204,113,0.12)',  title: 'Full-text search',           desc: 'Search by keyword, topic, type, or priority. Instant results across your entire history.' },
+              { icon: '📌', bg: 'rgba(245,166,35,0.12)',  title: 'Pinned topics + unread',     desc: 'Pin important topics to the top. Unread badges show new messages at a glance.' },
+              { icon: '📱', bg: 'rgba(100,144,255,0.12)', title: 'PWA + installable',          desc: 'Install on your phone home screen. Service worker caches the shell for instant loads.' },
+              { icon: '🌙', bg: 'rgba(245,166,35,0.12)',  title: 'Dark & light mode',          desc: 'Follows OS preference. Toggle anytime — persists across sessions.' },
+              { icon: '🐳', bg: 'rgba(61,107,255,0.12)',  title: 'Docker',                     desc: 'One command to deploy. Data persisted to a named volume. Health check included.' },
+            ].map(({ icon, bg, title, desc }, i) => (
+              <div key={title} className={`feature-card fade-up ${i % 3 === 1 ? 'stagger-1' : i % 3 === 2 ? 'stagger-2' : ''}`}>
+                <div className="feature-icon" style={{ background: bg }}>{icon}</div>
+                <h3>{title}</h3>
+                <p>{desc}</p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-    {/* ── Setup ── */}
-      <section id="setup" style={{ ...s.section, background: C.gray }}>
-        <div style={s.sectionInner}>
-          <div style={s.sectionLabel}>GET STARTED</div>
-          <h2 style={s.sectionTitle}>
-            Up and Running<br />
-            <span style={s.titleAccent}>In Three Steps</span>
-          </h2>
-          <div style={s.setupGrid}>
+        {/* How it works */}
+        <section className="l-section" id="how" style={{ paddingTop: 0 }}>
+          <div className="l-section-label">How it works</div>
+          <h2 className="l-section-title">Up and running<br/>in <em>three steps</em></h2>
+          <div className="steps">
             {[
-              { num: '01', title: 'Start the server', desc: 'Clone, install, and run. Beacon binds to all interfaces so any device on your network can reach it.', code: 'npm install\nnpm run dev -- --hostname 0.0.0.0' },
-              { num: '02', title: 'Subscribe to a topic', desc: 'Open any topic URL in your browser — or subscribe programmatically with EventSource. Topics are created on demand.', code: "new EventSource('/api/my-topic')" },
-              { num: '03', title: 'Publish a message', desc: 'POST to any topic from a script, CI pipeline, or cron job. Plain text or JSON — your choice.', code: "curl -d 'Hello' localhost:3000/api/topic" },
-            ].map((step, i) => (
-              <div key={i} style={s.setupCard}>
-                <div style={s.setupNum}>{step.num}</div>
-                <h3 style={s.setupTitle}>{step.title}</h3>
-                <p style={s.setupDesc}>{step.desc}</p>
-                <pre style={s.setupCode}>{step.code}</pre>
+              { n: '01', title: 'Start the server', body: 'Install and run. Beacon binds to all interfaces so any device on your network can reach it. Or deploy with Docker in one command.', code: 'npm install && npm run dev -- --hostname 0.0.0.0\n# or\ndocker compose up -d' },
+              { n: '02', title: 'Subscribe to a topic', body: 'Open any topic URL in your browser. Topics are created on demand — no setup needed. Subscribe programmatically with EventSource.', code: 'open http://localhost:3000/t/my-topic' },
+              { n: '03', title: 'Publish from anywhere', body: 'POST from a script, CI pipeline, cron job, or another service. Plain text, JSON, or ntfy-compatible headers all work.', code: 'curl -d "Hello" localhost:3000/api/my-topic' },
+            ].map(({ n, title, body, code }, i) => (
+              <div key={n} className={`step fade-up ${i > 0 ? `stagger-${i}` : ''}`}>
+                <div className="step-num">{n} —</div>
+                <h3>{title}</h3>
+                <p>{body}</p>
+                <pre className="step-code">{code}</pre>
               </div>
             ))}
           </div>
+        </section>
 
-          {/* ── Live Demo ── */}
-          <div style={s.demoSection}>
-            <div style={s.demoContainer}>
-              <object data={C.demoAnim} type="image/svg+xml" style={s.demoSvg} aria-label="Demo animation showing Beacon notification flow" />
-            </div>
-            <div style={s.demoSteps}>
+        {/* Notification types */}
+        <section className="l-section" id="notifications" style={{ paddingTop: 0 }}>
+          <div className="l-section-label">Notification types</div>
+          <h2 className="l-section-title">Four types,<br/><em>four priorities</em></h2>
+          <div className="notif-grid">
+            <div className="notif-card fade-up">
+              <div className="notif-card-hdr">Message types</div>
               {[
-                { num: 1, title: 'Pick a topic', desc: 'Type any topic name — topics are created on demand, no setup needed.' },
-                { num: 2, title: 'Write your message', desc: 'Plain text or JSON. Add a priority level (low, high, urgent) if you want.' },
-                { num: 3, title: 'Send it', desc: 'Hit send or POST via curl. The message arrives in under a second.' },
-                { num: 4, title: 'Get notified', desc: 'A notification pops on your device. SSE delivers it in real-time.' },
-              ].map((step, i) => (
-                <div key={i} style={s.demoStep}>
-                  <div style={s.demoNum}>{step.num}</div>
+                { cls: 'success', icon: '✅', title: 'Deploy complete',        msg: 'v2.4.1 is live on production',        meta: 'type: success · #deploy #prod', url: true },
+                { cls: 'error',   icon: '❌', title: 'Database connection lost', msg: 'Cannot reach postgres on port 5432',  meta: 'type: error · #infra #db' },
+                { cls: 'warning', icon: '⚠️', title: 'Disk usage high',         msg: 'Volume /data is at 91% capacity',     meta: 'type: warning · #infra' },
+                { cls: 'info',    icon: 'ℹ️', title: 'Backup started',          msg: 'Nightly snapshot running for db-prod', meta: 'type: info · #backup' },
+              ].map(({ cls, icon, title, msg, meta, url }) => (
+                <div key={title} className={`notif-bubble ${cls}`}>
+                  <div className={`notif-icon ${cls}`}>{icon}</div>
                   <div>
-                    <div style={s.demoStepTitle}>{step.title}</div>
-                    <div style={s.demoStepDesc}>{step.desc}</div>
+                    <div className="notif-title">{title}</div>
+                    <div className="notif-msg">{msg}</div>
+                    <div className="notif-meta">{meta}</div>
+                    {url && <div className="notif-url-btn">🔗 Open app</div>}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-
-          <div style={s.techSection}>
-            <div style={s.techLabel}>TECH STACK</div>
-            <div style={s.techRow}>
-              {['Next.js 16', 'SQLite', 'SSE', 'TypeScript', 'PWA'].map(t => (
-                <span key={t} style={s.techBadge}>{t}</span>
-              ))}
+            <div className="notif-card fade-up stagger-1">
+              <div className="notif-card-hdr">Priority levels</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[
+                  { icon: '🚨', label: 'urgent',  desc: 'Sound · OS notification · Telegram',  color: 'var(--error)',   bg: 'rgba(255,95,95,0.07)',   badge: 'rgba(255,95,95,0.15)' },
+                  { icon: '⚠️', label: 'high',    desc: 'OS notification · Telegram alert',     color: 'var(--warning)', bg: 'rgba(245,166,35,0.07)', badge: 'rgba(245,166,35,0.15)' },
+                  { icon: '🔔', label: 'default', desc: 'OS notification · Telegram alert',     color: 'var(--info)',    bg: 'rgba(100,144,255,0.07)',badge: 'rgba(100,144,255,0.15)' },
+                  { icon: '🔕', label: 'low',     desc: 'Web UI only · silent',                 color: 'var(--faint)',   bg: 'rgba(255,255,255,0.03)',badge: 'rgba(255,255,255,0.06)' },
+                ].map(({ icon, label, desc, color, bg, badge }) => (
+                  <div key={label} style={{ display:'flex',alignItems:'center',gap:10,padding:10,background:bg,borderRadius:7,borderLeft:`3px solid ${color}` }}>
+                    <span style={{ fontSize:16 }}>{icon}</span>
+                    <div>
+                      <div className="notif-title">{label}</div>
+                      <div className="notif-msg" style={{ fontSize:11 }}>{desc}</div>
+                    </div>
+                    <span style={{ marginLeft:'auto',fontFamily:'var(--mono)',fontSize:10,color,background:badge,padding:'2px 7px',borderRadius:4 }}>{label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── Stats bar ── */}
-      <div style={s.statsBar}>
-        {[
-          { val: '0', label: 'External deps' },
-          { val: '<1s', label: 'Delivery latency' },
-          { val: '∞', label: 'Unlimited topics' },
-          { val: '📱', label: 'Web Push' },
-          { val: '⚡', label: 'SSE real-time' },
-        ].map((s_, i) => (
-          <div key={i} style={s.statItem}>
-            <div style={s.statVal}>{s_.val}</div>
-            <div style={s.statLbl}>{s_.label}</div>
+        {/* CTA */}
+        <section className="l-cta">
+          <h2>Ready to <em>cut the noise?</em></h2>
+          <p>Beacon is running locally. Open the dashboard and send your first notification.</p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/dashboard" className="l-btn-primary" style={{ display: 'inline-block', fontSize: 15, padding: '13px 32px' }}>Open Beacon →</Link>
+            <Link href="/docs" className="l-btn-ghost" style={{ display: 'inline-block', fontSize: 13, padding: '13px 24px' }}>API docs</Link>
           </div>
-        ))}
+        </section>
+
+        {/* Footer */}
+        <footer className="l-footer">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><BeaconIcon size={14}/> Beacon</div>
+          <div>Self-hosted. Your data. Your rules.</div>
+          <div style={{ display: 'flex', gap: 16 }}>
+            <Link href="/dashboard" style={{ color: 'var(--faint)' }}>Dashboard</Link>
+            <Link href="/docs"      style={{ color: 'var(--faint)' }}>API docs</Link>
+            <Link href="/settings"  style={{ color: 'var(--faint)' }}>Settings</Link>
+          </div>
+        </footer>
       </div>
-
-      {/* ── CTA ── */}
-      <section style={s.cta}>
-        <h2 style={s.ctaTitle}>PARTICIPATE IN<br /><span style={s.titleAccent}>THE BETA</span></h2>
-        <p style={s.ctaDesc}>Beacon is running locally. Open the dashboard and send your first notification right now.</p>
-        <Link href="/dashboard" style={s.ctaBtn}>OPEN BEACON →</Link>
-      </section>
-
-      {/* ── Footer ── */}
-      <footer style={s.footer}>
-        <div style={s.footerTop}>
-          <div style={s.footerCol}>
-            <h4 style={s.footerTitle}>About Beacon</h4>
-            <p style={s.footerP}>Self-hosted push notification server. Your data, your infrastructure, your rules.</p>
-          </div>
-          <div style={s.footerCol}>
-            <h4 style={s.footerTitle}>Quick Links</h4>
-            <a href="#features" style={s.footerLink}>Features</a>
-            <a href="#setup" style={s.footerLink}>Setup</a>
-            <Link href="/dashboard" style={s.footerLink}>Dashboard</Link>
-          </div>
-          <div style={s.footerCol}>
-            <h4 style={s.footerTitle}>Tech</h4>
-            <div style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.8 }}>
-              Next.js 16 · SQLite · SSE<br />
-              TypeScript
-            </div>
-          </div>
-        </div>
-        <div style={s.footerBot}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <svg width="14" height="14" viewBox="0 0 48 48" fill="none">
-              <rect x="6" y="2" width="36" height="44" rx="6" stroke={C.gold} strokeWidth="2.5"/>
-              <circle cx="24" cy="4" r="1.5" stroke={C.gold} strokeWidth="1"/>
-              <rect x="18" y="42" width="12" height="1.5" rx="0.75" stroke={C.gold} strokeWidth="1" opacity="0.6"/>
-              <rect x="14" y="16" width="20" height="18" rx="3" stroke={C.gold} strokeWidth="0.8" opacity="0.3"/>
-            </svg>
-            Beacon v0.1.0
-          </div>
-          <div style={{ color: C.textMuted }}>Self-hosted. Your data. Your rules.</div>
-        </div>
-      </footer>
-
-      {/* Scroll to top */}
-      <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ ...s.topBtn, ...(showTopBtn ? s.topBtnVisible : {}) }} aria-label="Scroll to top">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2.5" strokeLinecap="round">
-          <polyline points="18 15 12 9 6 15"/>
-        </svg>
-      </button>
-    </div>
+    </>
   )
 }
 
-/* ── Styles ── */
-
-function buildStyles(C: Theme): Record<string, React.CSSProperties> {
-  return {
-  page: {
-    fontFamily: "'DM Sans', system-ui, sans-serif",
-    minHeight: '100vh',
-    overflowX: 'hidden',
-  },
-  nav: {
-    position: 'fixed', top: 0, left: 0, width: '100%', zIndex: 100,
-    transition: 'background 0.25s, border-color 0.25s',
-  },
-  navTop: { background: 'transparent', borderBottom: '1px solid transparent' },
-  navSolid: { background: `${C.bg}E0`, backdropFilter: 'blur(12px)', borderBottom: `1px solid ${C.border}40` },
-  navInner: {
-    maxWidth: 1100, margin: '0 auto', padding: '0 48px', height: 62,
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  },
-  navLogo: { display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' },
-  navLinks: { display: 'flex', alignItems: 'center', gap: 28, fontSize: 13 },
-  navLink: { color: C.text, textDecoration: 'none', transition: 'color 0.15s', letterSpacing: '0.3px' },
-  themeToggle: {
-    background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 6,
-    padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center',
-    lineHeight: 0,
-  },
-  navCta: {
-    background: `linear-gradient(135deg, ${C.grad1}, ${C.grad2})`,
-    color: '#fff', padding: '7px 18px', borderRadius: 6,
-    fontSize: 12, fontWeight: 600, textDecoration: 'none', letterSpacing: '0.5px',
-    textTransform: 'uppercase' as const,
-  },
-  hamburger: {
-    display: 'none', flexDirection: 'column' as const, gap: 4,
-    background: 'transparent', border: 'none', cursor: 'pointer',
-    padding: 8,
-  },
-  hamburgerLine: {
-    width: 18, height: 2, borderRadius: 1, background: C.text,
-    display: 'block',
-  },
-  mobileOverlay: {
-    position: 'fixed' as const, inset: 0, zIndex: 200,
-    background: 'rgba(0,0,0,0.6)', display: 'flex',
-    justifyContent: 'flex-end' as const,
-  },
-  mobilePanel: {
-    width: '75%', maxWidth: 320, height: '100%',
-    background: C.card, display: 'flex', flexDirection: 'column' as const,
-  },
-  mobileHeader: {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '18px 20px', borderBottom: `1px solid ${C.border}40`,
-  },
-  mobileClose: {
-    background: 'transparent', border: 'none', cursor: 'pointer',
-    padding: 4, display: 'flex',
-  },
-  mobileBody: {
-    flex: 1, padding: 20, display: 'flex', flexDirection: 'column' as const, gap: 6,
-  },
-  mobileLink: {
-    display: 'block', padding: '12px 14px', borderRadius: 8,
-    color: C.text, textDecoration: 'none', fontSize: 15, fontWeight: 500,
-    transition: 'background 0.15s',
-  },
-  mobileCta: {
-    display: 'block', textAlign: 'center' as const, padding: '12px 14px',
-    borderRadius: 8, color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 600,
-    background: `linear-gradient(135deg, ${C.grad1}, ${C.grad2})`,
-    letterSpacing: '0.5px',
-  },
-  mobileThemeBtn: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-    width: '100%', padding: '12px 14px', borderRadius: 8,
-    background: 'transparent', border: `1px solid ${C.border}`, color: C.text,
-    fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
-  },
-  /* Hero */
-  hero: {
-    position: 'relative' as const, zIndex: 1, overflow: 'hidden',
-    minHeight: '100vh', padding: '100px 24px', textAlign: 'center' as const,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    backgroundSize: 'cover', backgroundPosition: 'right',
-  },
-  heroOverlay: {
-    position: 'absolute' as const, inset: 0,
-    pointerEvents: 'none',
-  },
-  heroInner: { maxWidth: 780, margin: '0 auto', position: 'relative' as const, zIndex: 1 },
-  heroBadge: {
-    display: 'inline-flex', alignItems: 'center', gap: 6,
-    fontSize: 11, color: C.goldLight, letterSpacing: 1.5,
-    background: `${C.gold}12`, border: `1px solid ${C.gold}30`,
-    borderRadius: 20, padding: '5px 16px', marginBottom: 28,
-  },
-  badgeDot: { width: 6, height: 6, borderRadius: '50%', background: C.goldLight },
-  heroTitle: {
-    fontSize: 'clamp(36px, 6vw, 64px)', fontWeight: 700,
-    lineHeight: 1.1, letterSpacing: '2px', marginBottom: 20, color: C.heading,
-  },
-  heroAccent: {
-    background: `linear-gradient(135deg, ${C.grad1}, ${C.grad2})`,
-    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-  },
-  heroDesc: {
-    fontSize: 'clamp(15px, 1.8vw, 18px)', color: C.text,
-    maxWidth: 500, margin: '0 auto 36px', lineHeight: 1.7, fontWeight: 300,
-  },
-  heroCtas: { display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' as const, marginBottom: 48 },
-  btnPrimary: {
-    display: 'inline-block',
-    background: `linear-gradient(135deg, ${C.grad1}, ${C.grad2})`,
-    color: '#fff', padding: '14px 32px', borderRadius: 8,
-    fontSize: 13, fontWeight: 600, letterSpacing: '1px', textDecoration: 'none',
-  },
-  btnSecondary: {
-    display: 'inline-block', background: 'transparent', color: C.text,
-    padding: '14px 28px', border: `1px solid ${C.border}`, borderRadius: 8,
-    fontSize: 13, fontFamily: "'DM Mono', monospace", textDecoration: 'none',
-  },
-  /* Section */
-  section: { padding: '80px 24px', position: 'relative' as const, zIndex: 1 },
-  sectionInner: { maxWidth: 1100, margin: '0 auto' },
-  sectionLabel: {
-    fontFamily: "'DM Mono', monospace", fontSize: 11, color: C.gold,
-    letterSpacing: 3, marginBottom: 12, textTransform: 'uppercase' as const,
-  },
-  sectionTitle: {
-    fontSize: 'clamp(28px, 3.5vw, 42px)', fontWeight: 700,
-    lineHeight: 1.15, marginBottom: 48, letterSpacing: '1px', color: C.heading,
-  },
-  titleAccent: {
-    background: `linear-gradient(135deg, ${C.grad1}, ${C.grad2})`,
-    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-  },
-  /* Features */
-  featureGrid: {
-    display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 2,
-    background: `${C.border}60`, border: `1px solid ${C.border}60`,
-    borderRadius: 14, overflow: 'hidden',
-  },
-  featureCard: { background: C.card, padding: '32px 28px' },
-  featureIcon: { width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, marginBottom: 18 },
-  featureTitle: { fontSize: 13, fontWeight: 600, marginBottom: 10, letterSpacing: '1px', color: C.goldDark },
-  featureDesc: { fontSize: 14, color: C.text, lineHeight: 1.65 },
-  /* Demo */
-  demoSection: {
-    display: 'flex', gap: 48, alignItems: 'center', marginBottom: 48,
-    flexWrap: 'wrap' as const, justifyContent: 'center',
-  },
-  demoContainer: { flex: '0 0 320px' },
-  demoSvg: { width: 320, height: 'auto', display: 'block' },
-  demoSteps: { flex: '1 1 320px', display: 'flex', flexDirection: 'column' as const, gap: 18 },
-  demoStep: { display: 'flex', gap: 14, alignItems: 'flex-start' },
-  demoNum: {
-    width: 28, height: 28, borderRadius: '50%', background: `${C.gold}18`,
-    border: `1px solid ${C.gold}30`, color: C.goldLight,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: 12, fontWeight: 600, flexShrink: 0, fontFamily: "'DM Mono', monospace",
-  },
-  demoStepTitle: { fontSize: 14, fontWeight: 600, color: C.heading, marginBottom: 3 },
-  demoStepDesc: { fontSize: 13, color: C.textMuted, lineHeight: 1.55 },
-  /* Setup */
-  setupGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20, marginBottom: 40 },
-  setupCard: { background: C.card, border: `1px solid ${C.border}60`, borderRadius: 12, padding: 28 },
-  setupNum: { fontSize: 12, color: C.gold, fontWeight: 600, fontFamily: "'DM Mono', monospace", marginBottom: 14, letterSpacing: 1 },
-  setupTitle: { fontSize: 16, fontWeight: 500, marginBottom: 10, color: C.goldDark },
-  setupDesc: { fontSize: 13, color: C.text, lineHeight: 1.65, marginBottom: 16 },
-  setupCode: {
-    background: C.bg, border: `1px solid ${C.border}60`, borderRadius: 6,
-    padding: 12, fontSize: 11, fontFamily: "'DM Mono', monospace", color: C.textMuted,
-    overflowX: 'auto' as const, whiteSpace: 'pre-wrap' as const, margin: 0,
-  },
-  /* Tech */
-  techSection: { textAlign: 'center' as const, paddingTop: 16 },
-  techLabel: { fontSize: 11, color: C.textMuted, fontFamily: "'DM Mono', monospace", letterSpacing: 2, marginBottom: 16 },
-  techRow: { display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' as const },
-  techBadge: { background: `${C.gold}10`, border: `1px solid ${C.gold}25`, borderRadius: 20, padding: '5px 16px', fontSize: 12, color: C.goldLight },
-  /* Stats */
-  statsBar: {
-    display: 'flex', justifyContent: 'center', gap: 40, padding: '48px 24px',
-    borderTop: `1px solid ${C.border}60`, flexWrap: 'wrap' as const,
-    position: 'relative' as const, zIndex: 1,
-  },
-  statItem: { textAlign: 'center' as const },
-  statVal: { fontSize: 30, fontWeight: 700, color: C.gold, marginBottom: 4, letterSpacing: '-1px' },
-  statLbl: { fontSize: 12, color: C.textMuted, letterSpacing: '0.5px' },
-  /* CTA */
-  cta: {
-    textAlign: 'center' as const, padding: '80px 24px',
-    borderTop: `1px solid ${C.border}60`, position: 'relative' as const, zIndex: 1,
-  },
-  ctaTitle: { fontSize: 'clamp(24px, 3.5vw, 36px)', fontWeight: 700, letterSpacing: '2px', marginBottom: 16, color: C.goldDark },
-  ctaDesc: { color: C.text, fontSize: 15, marginBottom: 32, lineHeight: 1.6 },
-  ctaBtn: {
-    display: 'inline-block',
-    background: `linear-gradient(135deg, ${C.grad1}, ${C.grad2})`,
-    color: '#fff', padding: '14px 36px', borderRadius: 8,
-    fontSize: 13, fontWeight: 600, letterSpacing: '1px', textDecoration: 'none',
-  },
-  /* Footer */
-  footer: { borderTop: `1px solid ${C.border}60`, padding: '48px 24px 28px', position: 'relative' as const, zIndex: 1, background: C.card },
-  footerTop: { maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 40, marginBottom: 40 },
-  footerCol: { display: 'flex', flexDirection: 'column' as const, gap: 8 },
-  footerTitle: { fontSize: 13, fontWeight: 600, color: C.heading, marginBottom: 4, letterSpacing: '0.5px' },
-  footerP: { fontSize: 13, color: C.textMuted, lineHeight: 1.6 },
-  footerLink: { fontSize: 13, color: C.text, textDecoration: 'none', transition: 'color 0.15s' },
-  footerBot: {
-    maxWidth: 1100, margin: '0 auto', paddingTop: 20,
-    borderTop: `1px solid ${C.border}40`,
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    fontSize: 13, color: C.textMuted,
-  },
-  topBtn: {
-    position: 'fixed' as const, bottom: 28, right: 28, zIndex: 300,
-    width: 42, height: 42, borderRadius: '50%',
-    background: C.card, border: `1px solid ${C.border}`,
-    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    opacity: 0, pointerEvents: 'none' as const,
-    transform: 'translateY(12px)',
-    transition: 'opacity .25s, transform .25s',
-  },
-  topBtnVisible: {
-    opacity: 1, pointerEvents: 'auto' as const,
-    transform: 'translateY(0)',
-  },
-}}
+function BeaconIcon({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      <circle cx="24" cy="48" r="20" stroke="#3d6bff" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="55 999" strokeDashoffset="-20" opacity=".4"/>
+      <circle cx="24" cy="48" r="13" stroke="#3d6bff" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="36 999" strokeDashoffset="-13" opacity=".65"/>
+      <circle cx="24" cy="48" r="6"  stroke="#3d6bff" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="17 999" strokeDashoffset="-6"  opacity=".9"/>
+      <rect x="21" y="14" width="6" height="28" rx="2" fill="#3d6bff"/>
+      <polygon points="12,42 36,42 31,48 17,48" fill="#3d6bff" opacity=".6"/>
+      <circle cx="24" cy="12" r="4" fill="#6490ff"/>
+    </svg>
+  )
+}

@@ -1,146 +1,211 @@
 # Beacon
 
-A self-hosted push notification server with a dashboard UI, live topic pages, and Web Push / PWA support. Built with **Next.js 16**.
+Self-hosted push notifications — your own ntfy clone, built with Next.js 16.
+
+```
+curl -d "Hello world" http://localhost:3000/api/my-topic
+```
+
+---
 
 ## Quick start
 
 ```bash
+git clone <repo>
+cd beacon
+cp env.example .env.local   # edit to set NTFY_TOKEN, Telegram, etc.
 npm install
-npm run build && npm start
+npm run dev -- --hostname 0.0.0.0
 ```
 
-Open http://localhost:9876
+Open **http://localhost:3000**
 
-> The server auto-generates VAPID keys to `data/vapid.json` on first run.
+---
 
-## Usage
-
-### Publish a message
+## Docker
 
 ```bash
-curl -d "Hello world" http://localhost:9876/api/my-topic
+docker compose up -d
+```
 
-curl -X POST http://localhost:9876/api/my-topic \
+Data is persisted to a named Docker volume (`beacon-data`). The SQLite database lives at `/app/data/ntfy.db` inside the container.
+
+---
+
+## Publishing messages
+
+### Plain text (simplest)
+```bash
+curl -d "Hello" http://localhost:3000/api/my-topic
+```
+
+### Full JSON
+```bash
+curl -X POST http://localhost:3000/api/my-topic \
   -H "Content-Type: application/json" \
-  -d '{"title":"Deploy done","message":"✅ Success","priority":"high"}'
+  -d '{
+    "title":    "Deploy complete",
+    "message":  "v2.4.1 is live",
+    "type":     "success",
+    "priority": "high",
+    "tags":     ["deploy", "prod"],
+    "url":      "https://myapp.com",
+    "url_label":"Open app",
+    "ttl":      3600
+  }'
 ```
 
-### Subscribe via SSE
-
-Open a topic page in the browser:
-
-```
-http://localhost:9876/t/my-topic
-```
-
-Messages arrive in real time. Optionally enable **push notifications** (see below).
-
-### Dashboard
-
-```
-http://localhost:9876/dashboard
-```
-
-Live stats, quick publish, and topic list.
-
-## Web Push (mobile push notifications)
-
-Push requires **HTTPS**. On iOS it works only from an installed **home-screen PWA** (iOS 16.4+).
-
-### Set up HTTPS with Apache (recommended)
-
+### ntfy-compatible headers (plain text body + headers)
 ```bash
-sudo apt install apache2 certbot python3-certbot-apache
-sudo a2enmod proxy proxy_http proxy_wstunnel rewrite headers ssl
+curl -d "Disk at 92%" \
+  -H "X-Title: Warning" \
+  -H "X-Type: warning" \
+  -H "X-Priority: high" \
+  -H "X-Tags: infra,prod" \
+  http://localhost:3000/api/alerts
 ```
 
-**`/etc/apache2/sites-available/beacon.conf`**:
-
-```apache
-<VirtualHost *:80>
-  ServerName beacon.yourdomain.com
-  Redirect permanent / https://beacon.yourdomain.com/
-</VirtualHost>
-
-<VirtualHost *:443>
-  ServerName beacon.yourdomain.com
-
-  SSLEngine on
-  SSLCertificateFile      /etc/letsencrypt/live/beacon.yourdomain.com/fullchain.pem
-  SSLCertificateKeyFile   /etc/letsencrypt/live/beacon.yourdomain.com/privkey.pem
-
-  ProxyPreserveHost On
-  ProxyPass / http://localhost:9876/
-  ProxyPassReverse / http://localhost:9876/
-
-  ProxyPass /api/ http://localhost:9876/api/ nocanon
-  SetEnv proxy-nointerrupt 1
-  SetEnv proxy-sendchunked 1
-
-  RewriteEngine on
-  RewriteCond %{HTTP:Upgrade} websocket [NC]
-  RewriteCond %{HTTP:Connection} upgrade [NC]
-  RewriteRule ^/?(.*) ws://localhost:9876/$1 [P,L]
-
-  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
-  Header always set X-Content-Type-Options nosniff
-  Header always set X-Frame-Options DENY
-
-  ErrorLog  ${APACHE_LOG_DIR}/beacon-error.log
-  CustomLog ${APACHE_LOG_DIR}/beacon-access.log combined
-</VirtualHost>
-```
-
+### Scheduled message
 ```bash
-sudo certbot --apache -d beacon.yourdomain.com
-sudo a2ensite beacon
-sudo systemctl reload apache2
+# Send in 30 minutes
+curl -X POST http://localhost:3000/api/my-topic \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Maintenance window starting","delay":"30m"}'
 ```
 
-Point your phone at `https://beacon.yourdomain.com`, **Share → Add to Home Screen**, open the PWA, go to a topic, tap **📡 Push off** — you'll get push notifications even when the app is closed.
+---
 
-### Environment
+## Message fields
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `9876` | HTTP listen port |
-| `NTFY_VAPID_SUBJECT` | `mailto:admin@beacon.local` | Email for VAPID contact |
+| Field | Type | Description |
+|---|---|---|
+| `message` | string | **Required.** Notification body |
+| `title` | string | Optional heading |
+| `type` | `info \| success \| warning \| error` | Visual style |
+| `priority` | `low \| default \| high \| urgent` | Urgency level |
+| `tags` | string[] | Tag labels |
+| `url` | string | Click-action URL |
+| `url_label` | string | Button label (default: "Open") |
+| `ttl` | number | Seconds until expiry |
+| `delay` | string | Schedule: `30s`, `5m`, `2h`, `1d` |
 
-## API
+---
+
+## API reference
 
 | Method | Path | Description |
-|--------|------|-------------|
-| `GET`  | `/api/:topic` | Subscribe (SSE stream) |
+|---|---|---|
+| `GET` | `/api/:topic` | Subscribe (SSE stream) |
+| `GET` | `/api/:topic?poll=1` | Fetch history as JSON |
+| `GET` | `/api/:topic?since=<ts>` | Fetch messages since timestamp |
 | `POST` | `/api/:topic` | Publish a message |
-| `DELETE` | `/api/:topic` | Delete all messages (`?id=` for specific) |
-| `GET`  | `/api/topics` | List topics (SSE + JSON via `?list=1`) |
-| `GET`  | `/api/subscribe` | Get VAPID public key |
-| `POST` | `/api/subscribe` | Save a push subscription |
-| `DELETE` | `/api/subscribe` | Remove a push subscription |
+| `DELETE` | `/api/:topic` | Clear all topic messages |
+| `DELETE` | `/api/:topic?id=<id>` | Delete a specific message |
+| `HEAD` | `/api/:topic` | Subscriber count + stats |
+| `GET` | `/api/topics` | Live topic list (SSE) |
+| `GET` | `/api/topics?list=1` | Topic list + stats (JSON) |
+| `GET` | `/api/search` | Search message history |
+| `GET` | `/api/webhooks` | List webhooks |
+| `POST` | `/api/webhooks` | Create webhook |
+| `DELETE` | `/api/webhooks/:id` | Delete webhook |
+| `PATCH` | `/api/webhooks/:id` | Enable/pause webhook |
+| `GET` | `/api/scheduled` | List pending scheduled messages |
+| `DELETE` | `/api/scheduled?id=<id>` | Cancel a scheduled message |
+| `GET` | `/api/health` | Health check |
 
-### Message schema
+Full interactive docs at **http://localhost:3000/docs**
 
-```json
-{
-  "message":   "string (required)",
-  "title":     "string",
-  "priority":  "low | default | high | urgent",
-  "type":      "info | success | warning | error",
-  "tags":      ["string"],
-  "url":       "https://...",
-  "url_label": "Open",
-  "ttl":       3600
-}
+---
+
+## Authentication
+
+Set `NTFY_TOKEN` in `.env.local`:
+
+```bash
+NTFY_TOKEN=mysecrettoken
 ```
 
-### Response
-
-```json
-{ "ok": true, "id": "uuid", "delivered": 3 }
+Then pass it in requests:
+```bash
+curl -H "Authorization: Bearer mysecrettoken" \
+  -d "Hello" http://localhost:3000/api/my-topic
 ```
 
-## Architecture
+Browser users are redirected to `/login`.
 
-Messages are held in-memory (`app/store.ts`). For multi-instance deployments, replace the store with **Redis Pub/Sub**.
+---
 
-Push subscriptions are stored in SQLite (`data/subscriptions.db`).
+## Outgoing webhooks
+
+POST to any URL whenever a message is published to a topic. Configure via the Settings page or API:
+
+```bash
+curl -X POST http://localhost:3000/api/webhooks \
+  -H "Content-Type: application/json" \
+  -d '{"topic":"deploy","url":"https://hooks.slack.com/...","label":"Slack"}'
+```
+
+If a `secret` is set, requests include an `X-Beacon-Signature: sha256=<hmac>` header.
+
+---
+
+## Telegram notifications
+
+1. Message [@BotFather](https://t.me/BotFather) → `/newbot` → copy token
+2. Message [@userinfobot](https://t.me/userinfobot) → copy your chat ID
+3. Add to `.env.local`:
+
+```bash
+TELEGRAM_BOT_TOKEN=123456789:ABCdefGHI...
+TELEGRAM_CHAT_ID=987654321
+```
+
+---
+
+## Environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `NTFY_TOKEN` | _(empty)_ | Bearer token for auth. Empty = open access |
+| `NTFY_MAX_HISTORY` | `100` | Max messages to keep per topic |
+| `NTFY_DEFAULT_TTL` | `0` | Default message TTL in seconds (0 = never) |
+| `NTFY_RATE_LIMIT` | `60` | Max messages per topic per minute (0 = off) |
+| `TELEGRAM_BOT_TOKEN` | _(empty)_ | Telegram bot token |
+| `TELEGRAM_CHAT_ID` | _(empty)_ | Telegram chat ID |
+
+---
+
+## System notifications
+
+On the machine running the server:
+
+| Platform | Method | Requires |
+|---|---|---|
+| macOS | `osascript` | Built-in |
+| Windows | PowerShell toast | Built-in (Win 10/11) |
+| Linux | `notify-send` | `libnotify-bin` |
+
+> On a headless server, system notifications won't appear. Use Telegram or webhooks instead.
+
+---
+
+## Features
+
+- **Real-time SSE** — instant delivery, no polling
+- **Message history** — SQLite-backed, survives restarts
+- **Scheduled messages** — delay publishing with `delay=5m`
+- **Message expiry** — auto-purge with `ttl=3600`
+- **Outgoing webhooks** — with HMAC signing
+- **Rate limiting** — per topic, configurable
+- **Token auth** — single token protects all endpoints
+- **Telegram relay** — phone notifications when away from desk
+- **Native OS notifications** — macOS, Windows, Linux
+- **Message search** — full-text search across history
+- **Message templates** — save and reuse common messages
+- **Per-topic mute** — silence noisy topics
+- **Pinned topics** — keep important topics at top of sidebar
+- **Read/unread tracking** — badge count in sidebar
+- **Dark + light mode** — follows OS preference, toggleable
+- **PWA** — installable on phone home screen
+- **Collapsible sidebar** — more room when you need it
+- **Docker** — single `docker compose up -d`

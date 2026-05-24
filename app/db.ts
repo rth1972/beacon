@@ -179,6 +179,19 @@ export const messageDb = {
     const result = deleteExpiredStmt.run(Date.now())
     return result.changes
   },
+
+  search({ q, topic, type, priority, limit }: { q: string; topic: string; type: string; priority: string; limit: number }): DBMessage[] {
+    const conditions: string[] = ['(expires_at IS NULL OR expires_at > ?)']
+    const params: any[] = [Date.now()]
+    if (q)        { conditions.push('(message LIKE ? OR title LIKE ?)'); params.push(`%${q}%`, `%${q}%`) }
+    if (topic)    { conditions.push('topic = ?'); params.push(topic) }
+    if (type)     { conditions.push('type = ?'); params.push(type) }
+    if (priority) { conditions.push('priority = ?'); params.push(priority) }
+    params.push(limit)
+    const sql = `SELECT * FROM messages WHERE ${conditions.join(' AND ')} ORDER BY timestamp DESC LIMIT ?`
+    const rows = db.prepare(sql).all(...params) as any[]
+    return rows.map(parseRow)
+  },
 }
 
 export interface Subscription {
